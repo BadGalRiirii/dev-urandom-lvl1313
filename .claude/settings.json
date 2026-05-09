@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite *)",
+      "Bash(Get-Content C:\\\\riri-dev-urandom\\\\.env)",
+      "Bash(Select-String \"ADMIN_PASSWORD\")",
+      "PowerShell(netstat -ano)",
+      "PowerShell(Get-Process -Id 7824)",
+      "Bash(Get-ChildItem -Path \"C:\\\\riri-dev-urandom\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(curl -s http://localhost:8000/api/admin/posts -H \"Authorization: Bearer test\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8000)"
+    ]
+  }
+}

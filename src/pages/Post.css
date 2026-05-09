@@ -1,0 +1,117 @@
+.post-page {
+  padding: 100px 40px 80px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.post-article {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.post-back {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: var(--transition);
+  align-self: flex-start;
+}
+.post-back:hover { color: var(--yellow); }
+
+.post-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.post-stars {
+  font-size: 0.75rem;
+  color: var(--yellow);
+  letter-spacing: 0.04em;
+}
+
+.post-date {
+  font-size: 0.62rem;
+  color: var(--muted2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.post-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  color: var(--cream);
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.post-related {
+  font-size: 0.75rem;
+  color: var(--yellow-dim);
+  letter-spacing: 0.06em;
+}
+
+/* TipTap rendered content */
+.post-body {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--cream);
+}
+.post-body p { margin-bottom: 1.2em; }
+.post-body h2 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--cream);
+  margin: 2em 0 0.5em;
+  letter-spacing: 0.02em;
+}
+.post-body h3 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--cream);
+  margin: 1.5em 0 0.4em;
+}
+.post-body strong { color: var(--yellow); font-weight: 700; }
+.post-body em { font-style: italic; color: var(--muted); }
+.post-body blockquote {
+  border-left: 3px solid var(--yellow);
+  padding-left: 20px;
+  margin: 1.5em 0;
+  color: var(--muted);
+  font-style: italic;
+  font-family: var(--font-serif);
+}
+.post-body a { color: var(--yellow); text-decoration: underline; text-underline-offset: 3px; }
+.post-body code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--surface);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--yellow);
+}
+
+.post-not-found {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 80px 0 0;
+}
+
+@media (max-width: 768px) {
+  .post-page { padding: 90px 20px 60px; }
+}

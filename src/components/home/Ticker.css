@@ -1,0 +1,47 @@
+.ticker-wrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 0;
+  overflow: hidden;
+}
+
+.ticker-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  white-space: nowrap;
+  padding: 0 20px 0 40px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+}
+
+.ticker-track {
+  overflow: hidden;
+  flex: 1;
+}
+
+.ticker-inner {
+  display: flex;
+  gap: 0;
+  white-space: nowrap;
+  width: max-content;
+}
+
+.ticker-item {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 8px;
+}
+
+.ticker-sep {
+  color: var(--red);
+  margin: 0 12px;
+  font-size: 0.5rem;
+  vertical-align: middle;
+}

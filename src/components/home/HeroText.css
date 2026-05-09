@@ -1,0 +1,39 @@
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 560px;
+}
+
+.hero-chapter-stamp {
+  margin-bottom: 8px;
+}
+
+.hero-title {
+  font-size: clamp(5rem, 10vw, 9rem);
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+  color: var(--cream);
+  position: relative;
+}
+
+.hero-sub {
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  font-style: italic;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 380px;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: clamp(4rem, 16vw, 6rem);
+  }
+}

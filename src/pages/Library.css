@@ -1,0 +1,50 @@
+.library-page {
+  padding: 100px 40px 40px;
+  min-height: 100vh;
+}
+
+.library-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.library-eyebrow {
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin-bottom: 8px;
+}
+
+.library-title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  color: var(--cream);
+  margin-bottom: 4px;
+}
+
+.library-sub {
+  font-style: italic;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.library-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.library-loading {
+  padding: 80px 0;
+}
+
+.library-empty {
+  text-align: center;
+  padding: 80px 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+}

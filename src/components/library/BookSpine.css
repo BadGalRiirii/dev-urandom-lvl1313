@@ -1,0 +1,110 @@
+.book-spine {
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+  transform-origin: bottom center;
+  perspective: 600px;
+}
+
+.spine-body {
+  width: 44px;
+  height: 220px;
+  background: var(--spine-color);
+  border-radius: 2px 4px 4px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-shadow:
+    3px 0 10px rgba(0,0,0,0.6),
+    inset -4px 0 12px rgba(0,0,0,0.3),
+    inset 2px 0 4px rgba(255,255,255,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.book-spine.center .spine-body {
+  width: 52px;
+  height: 240px;
+  box-shadow:
+    6px 0 30px rgba(0,0,0,0.8),
+    0 0 40px rgba(230, 180, 0, 0.08),
+    inset -4px 0 12px rgba(0,0,0,0.3);
+}
+
+.spine-top-stripe {
+  height: 8px;
+  background: rgba(0,0,0,0.2);
+  flex-shrink: 0;
+}
+
+.spine-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.spine-text-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  overflow: hidden;
+  max-height: 140px;
+}
+
+.spine-title {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-height: 100px;
+  line-height: 1.2;
+}
+
+.spine-author {
+  font-size: 0.52rem;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.spine-type {
+  font-size: 0.5rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.1em;
+  align-self: center;
+}
+
+.spine-cover-hint {
+  padding: 6px 4px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.spine-cover-line {
+  width: 20px; height: 1px;
+  background: rgba(255,255,255,0.3);
+}
+.spine-open {
+  font-size: 0.45rem;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}

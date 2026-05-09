@@ -1,0 +1,83 @@
+.post-editor {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.editor-menubar {
+  display: flex;
+  gap: 4px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.editor-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  transition: var(--transition);
+  font-weight: 600;
+}
+.editor-btn:hover, .editor-btn.active {
+  background: rgba(230,180,0,0.08);
+  border-color: var(--border);
+  color: var(--yellow);
+}
+
+.editor-content {
+  padding: 20px;
+  min-height: 300px;
+}
+
+.editor-content .ProseMirror {
+  outline: none;
+  min-height: 260px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--cream);
+}
+.editor-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted2);
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+.editor-content .ProseMirror h2 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--cream);
+  margin: 1.5em 0 0.4em;
+}
+.editor-content .ProseMirror h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--cream);
+  margin: 1.2em 0 0.3em;
+}
+.editor-content .ProseMirror blockquote {
+  border-left: 3px solid var(--yellow);
+  padding-left: 16px;
+  color: var(--muted);
+  font-style: italic;
+  font-family: var(--font-serif);
+  margin: 1em 0;
+}
+.editor-content .ProseMirror strong { color: var(--yellow); }
+.editor-content .ProseMirror code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: rgba(230,180,0,0.08);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--yellow);
+}

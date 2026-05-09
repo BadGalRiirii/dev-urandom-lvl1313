@@ -1,0 +1,487 @@
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import AdminLogin from '../components/admin/AdminLogin'
+import PostEditor from '../components/blog/PostEditor'
+import {
+  getAllPosts, getPosts, createPost, updatePost, deletePost,
+  getBooks, uploadBook, deleteBook,
+  getTracks, uploadTrack, deleteTrack,
+} from '../lib/api'
+import './Admin.css'
+
+// ── Drag & Drop Upload Zone ───────────────────────────────────────────────────
+function DropZone({ accept, acceptLabel, file, onFile }) {
+  const [over, setOver] = useState(false)
+  const inputRef = useRef()
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault()
+    setOver(false)
+    const f = e.dataTransfer.files[0]
+    if (f) onFile(f)
+  }, [onFile])
+
+  return (
+    <div
+      className={`dropzone ${over ? 'dropzone--over' : ''} ${file ? 'dropzone--filled' : ''}`}
+      onDragOver={(e) => { e.preventDefault(); setOver(true) }}
+      onDragLeave={() => setOver(false)}
+      onDrop={handleDrop}
+      onClick={() => inputRef.current.click()}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        style={{ display: 'none' }}
+        onChange={(e) => onFile(e.target.files[0])}
+      />
+      {file ? (
+        <div className="dropzone-filled">
+          <span className="dropzone-icon">✓</span>
+          <span className="dropzone-name">{file.name}</span>
+          <span className="dropzone-size mono">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+        </div>
+      ) : (
+        <div className="dropzone-empty">
+          <span className="dropzone-icon">↑</span>
+          <span>Drop {acceptLabel} here or <u>click to browse</u></span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Upload Form (books or tracks) ─────────────────────────────────────────────
+function UploadForm({ type, accept, acceptLabel, onUpload }) {
+  const [file, setFile] = useState(null)
+  const [meta, setMeta] = useState({ title: '', author: '', artist: '', cover_color: '#e6b400' })
+  const [uploading, setUploading] = useState(false)
+  const [progress, setProgress] = useState('')
+
+  const reset = () => {
+    setFile(null)
+    setMeta({ title: '', author: '', artist: '', cover_color: '#e6b400' })
+    setProgress('')
+  }
+
+  const submit = async (e) => {
+    e.preventDefault()
+    if (!file || !meta.title) return
+    setUploading(true)
+    setProgress('Uploading…')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      Object.entries(meta).forEach(([k, v]) => v && fd.append(k, v))
+      await onUpload(fd)
+      setProgress('Done!')
+      setTimeout(() => { reset(); onUpload.__refresh?.() }, 1200)
+    } catch (err) {
+      setProgress(`Error: ${err.message}`)
+      setUploading(false)
+    }
+  }
+
+  return (
+    <form className="upload-form" onSubmit={submit}>
+      <DropZone accept={accept} acceptLabel={acceptLabel} file={file} onFile={setFile} />
+      <div className="upload-meta-row">
+        <input
+          placeholder="Title *"
+          value={meta.title}
+          onChange={(e) => setMeta(m => ({ ...m, title: e.target.value }))}
+          required
+        />
+        {type === 'book' && (
+          <input
+            placeholder="Author"
+            value={meta.author}
+            onChange={(e) => setMeta(m => ({ ...m, author: e.target.value }))}
+          />
+        )}
+        {type === 'track' && (
+          <input
+            placeholder="Artist"
+            value={meta.artist}
+            onChange={(e) => setMeta(m => ({ ...m, artist: e.target.value }))}
+          />
+        )}
+        <div className="upload-color-row">
+          <label className="mono" style={{ fontSize: '0.68rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+            Spine color
+          </label>
+          <input
+            type="color"
+            value={meta.cover_color}
+            onChange={(e) => setMeta(m => ({ ...m, cover_color: e.target.value }))}
+            style={{ width: 36, height: 32, padding: 2, background: 'none', border: '1px solid var(--border)', borderRadius: 4, cursor: 'pointer' }}
+          />
+          <span className="mono" style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{meta.cover_color}</span>
+        </div>
+      </div>
+      <div className="upload-actions">
+        {progress && <span className={`upload-status mono ${progress.startsWith('Error') ? 'upload-status--err' : ''}`}>{progress}</span>}
+        <button type="submit" className="btn btn-yellow" disabled={uploading || !file || !meta.title}>
+          {uploading ? 'Uploading…' : 'Upload'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ── Books Tab ─────────────────────────────────────────────────────────────────
+function BooksTab() {
+  const [books, setBooks] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const load = () => getBooks().then(setBooks).catch(() => {}).finally(() => setLoading(false))
+
+  useEffect(() => { load() }, [])
+
+  const handleUpload = async (fd) => {
+    await uploadBook(fd)
+    load()
+  }
+
+  const handleDelete = async (id, title) => {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return
+    await deleteBook(id)
+    setBooks(b => b.filter(x => x.id !== id))
+  }
+
+  return (
+    <div className="tab-content">
+      <div className="admin-section">
+        <div className="admin-section-title mono">// Upload Book</div>
+        <UploadForm type="book" accept=".pdf,.epub" acceptLabel="PDF or EPUB" onUpload={handleUpload} />
+      </div>
+
+      <div className="admin-section">
+        <div className="admin-section-title mono">// Library ({books.length})</div>
+        {loading ? (
+          <div className="admin-empty mono">Loading…</div>
+        ) : books.length === 0 ? (
+          <div className="admin-empty mono">No books yet.</div>
+        ) : (
+          <div className="content-list">
+            {books.map((b) => (
+              <div key={b.id} className="content-row">
+                <span className="content-swatch" style={{ background: b.cover_color || '#e6b400' }} />
+                <div className="content-info">
+                  <span className="content-title">{b.title}</span>
+                  {b.author && <span className="content-meta mono">{b.author}</span>}
+                </div>
+                <span className={`type-badge mono type-badge--${b.file_type}`}>{b.file_type}</span>
+                <button className="btn btn-red btn-sm" onClick={() => handleDelete(b.id, b.title)}>Del</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Music Tab ─────────────────────────────────────────────────────────────────
+function MusicTab({ onPlay }) {
+  const [tracks, setTracks] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const load = () => getTracks().then(setTracks).catch(() => {}).finally(() => setLoading(false))
+
+  useEffect(() => { load() }, [])
+
+  const handleUpload = async (fd) => {
+    await uploadTrack(fd)
+    load()
+  }
+
+  const handleDelete = async (id, title) => {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return
+    await deleteTrack(id)
+    setTracks(t => t.filter(x => x.id !== id))
+  }
+
+  return (
+    <div className="tab-content">
+      <div className="admin-section">
+        <div className="admin-section-title mono">// Upload Track</div>
+        <UploadForm type="track" accept=".mp3,.wav,.ogg" acceptLabel="MP3, WAV, or OGG" onUpload={handleUpload} />
+      </div>
+
+      <div className="admin-section">
+        <div className="admin-section-title mono">// Tracks ({tracks.length})</div>
+        {loading ? (
+          <div className="admin-empty mono">Loading…</div>
+        ) : tracks.length === 0 ? (
+          <div className="admin-empty mono">No tracks yet.</div>
+        ) : (
+          <div className="content-list">
+            {tracks.map((t) => (
+              <div key={t.id} className="content-row">
+                <span className="content-swatch" style={{ background: t.cover_color || '#e6b400' }} />
+                <div className="content-info">
+                  <span className="content-title">{t.title}</span>
+                  {t.artist && <span className="content-meta mono">{t.artist}</span>}
+                </div>
+                <button
+                  className="btn btn-sm"
+                  onClick={() => onPlay(t)}
+                  title="Preview"
+                >▶</button>
+                <button className="btn btn-red btn-sm" onClick={() => handleDelete(t.id, t.title)}>Del</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Post Manager ──────────────────────────────────────────────────────────────
+function PostsTab() {
+  const [posts, setPosts] = useState([])
+  const [editing, setEditing] = useState(null)
+  const [form, setForm] = useState({ title: '', content: '', category: 'book', related_title: '', rating: 5, published: true })
+  const [saving, setSaving] = useState(false)
+  const formRef = useRef()
+
+  useEffect(() => { getAllPosts().then(setPosts).catch(() => {}) }, [])
+
+  const resetForm = () => {
+    setEditing(null)
+    setForm({ title: '', content: '', category: 'book', related_title: '', rating: 5, published: true })
+  }
+
+  const loadPost = (post) => {
+    setEditing(post.id)
+    setForm({ title: post.title, content: post.content, category: post.category, related_title: post.related_title || '', rating: post.rating || 5, published: post.published })
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+  }
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      if (editing) await updatePost(editing, form)
+      else await createPost(form)
+      setPosts(await getAllPosts())
+      resetForm()
+    } catch (err) { alert(err.message) }
+    finally { setSaving(false) }
+  }
+
+  const remove = async (id) => {
+    if (!confirm('Delete this post?')) return
+    await deletePost(id)
+    setPosts(p => p.filter(x => x.id !== id))
+  }
+
+  const togglePublish = async (post) => {
+    await updatePost(post.id, { ...post, published: !post.published })
+    setPosts(p => p.map(x => x.id === post.id ? { ...x, published: !x.published } : x))
+  }
+
+  return (
+    <div className="tab-content">
+      <div className="admin-section" ref={formRef}>
+        <div className="admin-section-title mono">{editing ? '// Editing Post' : '// New Post'}</div>
+        <div className="post-form">
+          <input placeholder="Title *" value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} required />
+          <div className="post-form-row">
+            <select value={form.category} onChange={(e) => setForm(f => ({ ...f, category: e.target.value }))}>
+              <option value="book">Book</option>
+              <option value="film">Film</option>
+              <option value="series">Series</option>
+            </select>
+            <input
+              placeholder="Related title"
+              value={form.related_title}
+              onChange={(e) => setForm(f => ({ ...f, related_title: e.target.value }))}
+            />
+            <input
+              type="number" min="1" max="5" placeholder="Rating /5"
+              value={form.rating}
+              onChange={(e) => setForm(f => ({ ...f, rating: Number(e.target.value) }))}
+              style={{ width: 90 }}
+            />
+          </div>
+          <PostEditor value={form.content} onChange={(html) => setForm(f => ({ ...f, content: html }))} />
+          <div className="post-form-actions">
+            <label className="post-published-toggle">
+              <input type="checkbox" checked={form.published}
+                onChange={(e) => setForm(f => ({ ...f, published: e.target.checked }))} />
+              <span className="mono">Published</span>
+            </label>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {editing && <button className="btn" onClick={resetForm}>Cancel</button>}
+              <button className="btn btn-yellow" onClick={save} disabled={saving || !form.title}>
+                {saving ? 'Saving…' : editing ? 'Update' : 'Publish'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="admin-section">
+        <div className="admin-section-title mono">// All Posts ({posts.length})</div>
+        {posts.length === 0 ? (
+          <div className="admin-empty mono">No posts yet.</div>
+        ) : (
+          <div className="content-list">
+            {posts.map((post) => (
+              <div key={post.id} className="content-row">
+                <div className="content-info">
+                  <span className="content-title">{post.title}</span>
+                  <span className="content-meta mono">{post.category}{post.related_title ? ` · ${post.related_title}` : ''}</span>
+                </div>
+                <button
+                  className={`pill pill-sm ${post.published ? 'pill-published' : 'pill-draft'}`}
+                  onClick={() => togglePublish(post)}
+                  title="Toggle publish"
+                >
+                  {post.published ? 'live' : 'draft'}
+                </button>
+                <button className="btn btn-sm" onClick={() => loadPost(post)}>Edit</button>
+                <button className="btn btn-red btn-sm" onClick={() => remove(post.id)}>Del</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function Dashboard({ onSwitchTab }) {
+  const [stats, setStats] = useState({ books: 0, tracks: 0, posts: 0, drafts: 0 })
+  const [recent, setRecent] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.allSettled([getBooks(), getTracks(), getAllPosts()]).then(([b, t, p]) => {
+      const books = b.value || []
+      const tracks = t.value || []
+      const posts = p.value || []
+      setStats({
+        books: books.length,
+        tracks: tracks.length,
+        posts: posts.filter(x => x.published).length,
+        drafts: posts.filter(x => !x.published).length,
+      })
+      const items = [
+        ...books.map(x => ({ ...x, _type: 'book' })),
+        ...tracks.map(x => ({ ...x, _type: 'track' })),
+        ...posts.map(x => ({ ...x, _type: 'post' })),
+      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 6)
+      setRecent(items)
+      setLoading(false)
+    })
+  }, [])
+
+  const STAT_CARDS = [
+    { label: 'Books', value: stats.books, tab: 'books', color: 'var(--yellow)' },
+    { label: 'Tracks', value: stats.tracks, tab: 'music', color: 'var(--red)' },
+    { label: 'Posts', value: stats.posts, tab: 'posts', color: 'var(--cream)' },
+    { label: 'Drafts', value: stats.drafts, tab: 'posts', color: 'var(--muted)' },
+  ]
+
+  return (
+    <div className="tab-content">
+      <div className="stat-grid">
+        {STAT_CARDS.map((s) => (
+          <button key={s.label} className="stat-card" onClick={() => onSwitchTab(s.tab)}>
+            <span className="stat-value" style={{ color: s.color }}>{loading ? '—' : s.value}</span>
+            <span className="stat-label mono">{s.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="admin-section">
+        <div className="admin-section-title mono">// Recent uploads</div>
+        {loading ? (
+          <div className="admin-empty mono">Loading…</div>
+        ) : recent.length === 0 ? (
+          <div className="admin-empty mono">Nothing uploaded yet.</div>
+        ) : (
+          <div className="content-list">
+            {recent.map((item) => (
+              <div key={item.id} className="content-row">
+                <span className={`type-badge mono type-badge--${item._type}`}>{item._type}</span>
+                <div className="content-info">
+                  <span className="content-title">{item.title}</span>
+                  {(item.author || item.artist) && (
+                    <span className="content-meta mono">{item.author || item.artist}</span>
+                  )}
+                </div>
+                <span className="content-meta mono" style={{ flexShrink: 0 }}>
+                  {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Main Admin Page ───────────────────────────────────────────────────────────
+const TABS = ['dashboard', 'posts', 'books', 'music']
+
+export default function Admin() {
+  const [authed, setAuthed] = useState(!!localStorage.getItem('admin_token'))
+  const [tab, setTab] = useState('dashboard')
+  const [previewTrack, setPreviewTrack] = useState(null)
+  const audioRef = useRef()
+
+  useEffect(() => {
+    if (!previewTrack || !audioRef.current) return
+    audioRef.current.src = previewTrack.url
+    audioRef.current.play()
+  }, [previewTrack])
+
+  if (!authed) return <AdminLogin onSuccess={() => setAuthed(true)} />
+
+  return (
+    <div className="admin-page page">
+      {/* hidden audio for track preview */}
+      <audio ref={audioRef} style={{ display: 'none' }} />
+
+      <div className="admin-header">
+        <div>
+          <div className="mono admin-eyebrow">// /admin</div>
+          <h1 className="display admin-title">The Studio</h1>
+        </div>
+        <button className="btn" onClick={() => { localStorage.removeItem('admin_token'); setAuthed(false) }}>
+          Sign out
+        </button>
+      </div>
+
+      <div className="admin-tabs">
+        {TABS.map((t) => (
+          <button key={t} className={`pill ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={tab}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2 }}
+        >
+          {tab === 'dashboard' && <Dashboard onSwitchTab={setTab} />}
+          {tab === 'posts' && <PostsTab />}
+          {tab === 'books' && <BooksTab />}
+          {tab === 'music' && <MusicTab onPlay={setPreviewTrack} />}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
+}

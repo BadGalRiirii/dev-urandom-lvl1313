@@ -1,0 +1,50 @@
+.music-page {
+  padding: 100px 40px 60px;
+  min-height: 100vh;
+}
+
+.music-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.music-eyebrow {
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin-bottom: 8px;
+}
+
+.music-title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  color: var(--cream);
+  margin-bottom: 4px;
+}
+
+.music-sub {
+  font-style: italic;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.music-loading {
+  display: flex;
+  justify-content: center;
+  padding: 80px 0;
+}
+
+.record-placeholder {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.music-empty {
+  text-align: center;
+  padding: 80px 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+}
