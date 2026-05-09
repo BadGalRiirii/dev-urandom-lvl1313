@@ -1,0 +1,101 @@
+.themes-page {
+  padding: 100px 40px 60px;
+  min-height: 100vh;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.themes-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.themes-eyebrow {
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin-bottom: 10px;
+}
+
+.themes-title {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  color: var(--cream);
+  margin-bottom: 12px;
+}
+
+.themes-sub {
+  font-style: italic;
+  color: var(--muted);
+  font-size: 1rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.themes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.theme-card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  height: 300px;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.theme-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.theme-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.theme-card-dots {
+  display: flex;
+  gap: 6px;
+  align-self: flex-end;
+}
+.theme-card-dots > div {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+
+.theme-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theme-card-name {
+  font-size: 1.4rem;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.theme-card-palette {
+  display: flex;
+  gap: 4px;
+}
+.theme-swatch {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+@media (max-width: 768px) {
+  .themes-page { padding: 90px 20px 40px; }
+  .themes-grid { grid-template-columns: 1fr; }
+}

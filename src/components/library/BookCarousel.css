@@ -1,0 +1,84 @@
+.book-carousel {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  padding: 60px 0 20px;
+}
+
+.carousel-stage {
+  position: relative;
+  height: 280px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  perspective: 800px;
+  transform-style: preserve-3d;
+}
+
+.carousel-item {
+  position: absolute;
+  bottom: 0;
+  transform-origin: bottom center;
+}
+
+.carousel-shelf {
+  width: 70%;
+  height: 6px;
+  background: linear-gradient(to right, transparent, var(--border), transparent);
+  border-radius: 3px;
+  position: absolute;
+  bottom: 40px;
+  left: 15%;
+}
+
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--cream);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  line-height: 1;
+}
+.carousel-arrow:hover {
+  border-color: var(--yellow);
+  color: var(--yellow);
+}
+.carousel-arrow.left { left: 20px; }
+.carousel-arrow.right { right: 20px; }
+
+.carousel-info {
+  text-align: center;
+}
+.carousel-info-title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--cream);
+  letter-spacing: 0.02em;
+}
+.carousel-info-author {
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+.carousel-info-hint {
+  font-size: 0.6rem;
+  color: var(--yellow);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  opacity: 0.7;
+}

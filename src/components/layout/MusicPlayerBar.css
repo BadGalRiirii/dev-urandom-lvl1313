@@ -1,0 +1,132 @@
+.player-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  height: 72px;
+  background: rgba(10, 7, 4, 0.96);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 32px;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 200px;
+}
+
+.player-disc {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: spin 4s linear infinite;
+  flex-shrink: 0;
+}
+
+.player-disc:not(:hover) {
+  animation-play-state: running;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.player-disc-hole {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+
+.player-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cream);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.player-artist {
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.player-controls {
+  flex-shrink: 0;
+}
+
+.player-btn {
+  background: none;
+  border: none;
+  color: var(--cream);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.player-btn:hover {
+  background: rgba(230, 180, 0, 0.1);
+  color: var(--yellow);
+}
+
+.player-progress-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-time {
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.player-progress {
+  flex: 1;
+  height: 3px;
+  background: rgba(245, 240, 232, 0.1);
+  border-radius: 99px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.player-bar-fill {
+  height: 100%;
+  background: var(--yellow);
+  border-radius: 99px;
+  transition: width 0.1s linear;
+}
+
+.player-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.player-close:hover {
+  color: var(--cream);
+}

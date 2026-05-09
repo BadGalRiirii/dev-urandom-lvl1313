@@ -1,0 +1,139 @@
+.reader-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  height: 52px;
+  background: rgba(10, 7, 4, 0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+}
+
+.toolbar-left, .toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Back link ──────────────────────────────────────── */
+.toolbar-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  flex-shrink: 0;
+}
+.toolbar-back:hover {
+  border-color: var(--yellow);
+  color: var(--yellow);
+  background: rgba(212, 175, 55, 0.1);
+}
+
+/* ── Theme dots ─────────────────────────────────────── */
+.toolbar-themes {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.theme-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.theme-dot:nth-child(1) { background: #8b5e3c; }
+.theme-dot:nth-child(2) { background: #4a8a3a; }
+.theme-dot:nth-child(3) { background: #d45080; }
+.theme-dot:nth-child(4) { background: #9060c8; }
+.theme-dot:nth-child(5) { background: #4a3010; }
+.theme-dot:nth-child(6) { background: #00ff88; }
+.theme-dot.active {
+  border-color: var(--yellow);
+  transform: scale(1.3);
+}
+.theme-dot:hover:not(.active) { transform: scale(1.15); }
+
+/* ── Progress center ────────────────────────────────── */
+.toolbar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.toolbar-progress-bar {
+  flex: 1;
+  height: 2px;
+  background: rgba(245, 240, 232, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.toolbar-progress-fill {
+  height: 100%;
+  background: var(--yellow);
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.toolbar-progress-label {
+  font-size: 0.6rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+  min-width: 2.6ch;
+  text-align: right;
+}
+
+/* ── Font size controls ─────────────────────────────── */
+.toolbar-font-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--cream);
+  padding: 3px 9px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  transition: border-color 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+.toolbar-font-btn:hover {
+  border-color: var(--yellow);
+  color: var(--yellow);
+}
+.toolbar-font-size {
+  font-size: 0.65rem;
+  color: var(--muted);
+  min-width: 34px;
+  text-align: center;
+}
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  .reader-toolbar { padding: 0 12px; gap: 10px; }
+  .toolbar-themes { gap: 4px; }
+  .theme-dot { width: 12px; height: 12px; }
+  .toolbar-font-btn { padding: 3px 7px; font-size: 0.62rem; }
+  .toolbar-progress-label { display: none; }
+}
+
+@media (max-width: 400px) {
+  .toolbar-themes { display: none; }
+}

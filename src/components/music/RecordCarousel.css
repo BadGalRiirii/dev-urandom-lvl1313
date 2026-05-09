@@ -1,0 +1,192 @@
+.record-carousel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+  padding: 40px 0;
+}
+
+.record-stage {
+  position: relative;
+  height: 280px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 900px;
+}
+
+.record-stage-item {
+  position: absolute;
+  transform-origin: center center;
+}
+
+.record-carousel-item {
+  cursor: pointer;
+  position: relative;
+}
+
+.record-vinyl {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: var(--rec-color, #111);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.8),
+    inset 0 0 30px rgba(0,0,0,0.5);
+  transition: var(--transition);
+}
+
+.record-carousel-item.center .record-vinyl {
+  animation: spin-slow 8s linear infinite;
+  animation-play-state: paused;
+}
+.record-carousel-item.center:hover .record-vinyl {
+  animation-play-state: running;
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+.record-vinyl-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.record-grooves {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+.record-groove-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.record-label-disc {
+  position: absolute;
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--yellow);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.record-label-text {
+  text-align: center;
+}
+.record-label-title {
+  font-family: var(--font-mono);
+  font-size: 0.4rem;
+  color: #111;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 56px;
+}
+.record-label-artist {
+  font-family: var(--font-mono);
+  font-size: 0.35rem;
+  color: rgba(0,0,0,0.6);
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 56px;
+}
+.record-center-hole {
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #111;
+}
+
+.record-play-hint {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  transition: var(--transition);
+}
+.record-carousel-item:hover .record-play-hint {
+  opacity: 1;
+}
+
+.record-shadow {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160px; height: 30px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.record-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-calc(50% + 20px));
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--cream);
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  line-height: 1;
+}
+.record-arrow:hover {
+  border-color: var(--yellow);
+  color: var(--yellow);
+}
+.record-arrow.left { left: 20px; }
+.record-arrow.right { right: 20px; }
+
+.record-info {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.record-info-title {
+  font-size: 2rem;
+  color: var(--cream);
+  letter-spacing: 0.02em;
+}
+.record-info-artist {
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.record-play-btn {
+  margin-top: 8px;
+  font-size: 0.72rem;
+}

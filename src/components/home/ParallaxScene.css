@@ -1,0 +1,116 @@
+.parallax-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ── WKW Light Leaks ── */
+.leak {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  mix-blend-mode: screen;
+}
+.leak-gold {
+  width: 500px; height: 500px;
+  background: rgba(230, 180, 0, 1);
+  top: -150px; left: -100px;
+}
+.leak-red {
+  width: 600px; height: 600px;
+  background: rgba(200, 30, 30, 1);
+  bottom: -200px; right: -150px;
+}
+.leak-violet {
+  width: 400px; height: 400px;
+  background: rgba(120, 60, 200, 1);
+  top: 30%; left: 50%;
+}
+
+/* ── Books ── */
+.parallax-books {
+  position: absolute;
+  inset: 0;
+}
+.book-spine-parallax {
+  position: absolute;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 4px 20px rgba(0,0,0,0.6), inset -3px 0 8px rgba(0,0,0,0.4);
+}
+.book-spine-line {
+  width: 1px;
+  height: 60%;
+  background: rgba(255,255,255,0.1);
+}
+
+/* ── Records ── */
+.parallax-record {
+  position: absolute;
+  pointer-events: none;
+}
+.record-disc {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+  animation: slow-spin 20s linear infinite;
+}
+@keyframes slow-spin {
+  to { transform: rotate(360deg); }
+}
+.record-label {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  opacity: 0.9;
+}
+.record-hole {
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #111;
+  z-index: 2;
+}
+.record-groove {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+/* ── Film Strip ── */
+.parallax-filmstrip {
+  position: absolute;
+  top: 10%;
+  right: 5%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0.15;
+  transform: rotate(8deg);
+}
+.film-frame {
+  width: 60px;
+  height: 44px;
+  background: #1a1000;
+  border: 1px solid rgba(230,180,0,0.2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+.film-hole {
+  width: 10px; height: 8px;
+  background: var(--bg);
+  border-radius: 2px;
+  margin: 0 auto;
+}
