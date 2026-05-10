@@ -1,5 +1,5 @@
 .library-page {
-  padding: 100px 40px 40px;
+  padding: 100px 40px 80px;
   min-height: 100vh;
 }
 
@@ -7,34 +7,34 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 20px;
 }
 
 .library-eyebrow {
-  font-size: 0.65rem;
-  letter-spacing: 0.14em;
+  font-family: var(--font-sc);
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--yellow);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  opacity: 0.8;
 }
 
 .library-title {
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-size: clamp(3rem, 6vw, 5rem);
   color: var(--cream);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-style: italic;
 }
 
 .library-sub {
   font-style: italic;
   color: var(--muted);
-  font-size: 1rem;
-}
-
-.library-filters {
-  display: flex;
-  gap: 8px;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
 }
 
 .library-loading {
@@ -45,6 +45,7 @@
   text-align: center;
   padding: 80px 0;
   color: var(--muted);
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
 }

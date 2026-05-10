@@ -52,7 +52,7 @@ create table if not exists tracks (
   title        text not null,
   artist       text,
   file_path    text not null,
-  cover_color  text default '#e6b400',
+  cd_image     int default 1,
   duration     float,
   created_at   timestamptz default now()
 );

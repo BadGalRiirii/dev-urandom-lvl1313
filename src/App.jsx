@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -38,11 +38,39 @@ function PageWrapper({ children }) {
 
 function AppInner() {
   const location = useLocation()
-  const isRead = location.pathname.startsWith('/read')
-  const isAdmin = location.pathname.startsWith('/admin')
-  const showNav = !isRead && !isAdmin
+  const isRead   = location.pathname.startsWith('/read')
+  const isAdmin  = location.pathname.startsWith('/admin')
+  const showNav  = !isRead && !isAdmin
 
-  const [currentTrack, setCurrentTrack] = useState(null)
+  const [currentTrack,   setCurrentTrack]   = useState(null)
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false)
+  const [audioProgress,  setAudioProgress]  = useState(0)
+  const [audioDuration,  setAudioDuration]  = useState(0)
+  const [analyserNode,   setAnalyserNode]   = useState(null)
+
+  const playerRef     = useRef(null)
+  const trackEndedRef = useRef(null)
+
+  const handlePlay   = useCallback((track) => setCurrentTrack(track), [])
+  const handlePause  = useCallback(() => playerRef.current?.pause(),  [])
+  const handleResume = useCallback(() => playerRef.current?.resume(), [])
+  const handleEject  = useCallback(() => {
+    playerRef.current?.stop()
+    setCurrentTrack(null)
+    setIsAudioPlaying(false)
+    setAudioProgress(0)
+    setAudioDuration(0)
+  }, [])
+
+  const handleProgressChange = useCallback((p, d) => {
+    setAudioProgress(p)
+    setAudioDuration(d)
+  }, [])
+
+  const handleTrackEnded  = useCallback(() => { trackEndedRef.current?.() }, [])
+  const registerEnded     = useCallback((fn) => { trackEndedRef.current = fn }, [])
+  const handleSeek        = useCallback((pct) => { playerRef.current?.seek(pct) }, [])
+  const handleAnalyserReady = useCallback((node) => { setAnalyserNode(node) }, [])
 
   return (
     <>
@@ -54,18 +82,41 @@ function AppInner() {
       {showNav && <Nav />}
 
       <Routes>
-        <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
+        <Route path="/"        element={<PageWrapper><Home /></PageWrapper>} />
         <Route path="/library" element={<PageWrapper><Library /></PageWrapper>} />
         <Route path="/read/:id" element={<Read />} />
-        <Route path="/journal" element={<PageWrapper><Journal /></PageWrapper>} />
+        <Route path="/journal"  element={<PageWrapper><Journal /></PageWrapper>} />
         <Route path="/post/:id" element={<PageWrapper><Post /></PageWrapper>} />
-        <Route path="/music" element={<PageWrapper><Music onPlay={setCurrentTrack} /></PageWrapper>} />
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/music" element={
+          <PageWrapper>
+            <Music
+              onPlay={handlePlay}
+              onPause={handlePause}
+              onResume={handleResume}
+              onEject={handleEject}
+              isAudioPlaying={isAudioPlaying}
+              audioProgress={audioProgress}
+              audioDuration={audioDuration}
+              onRegisterEnded={registerEnded}
+              onSeek={handleSeek}
+              analyserNode={analyserNode}
+            />
+          </PageWrapper>
+        } />
+        <Route path="/admin"  element={<Admin />} />
         <Route path="/themes" element={<PageWrapper><Themes /></PageWrapper>} />
       </Routes>
 
       {!isRead && (
-        <MusicPlayerBar track={currentTrack} onClose={() => setCurrentTrack(null)} />
+        <MusicPlayerBar
+          ref={playerRef}
+          track={currentTrack}
+          onClose={handleEject}
+          onPlayStateChange={setIsAudioPlaying}
+          onEnded={handleTrackEnded}
+          onProgressChange={handleProgressChange}
+          onAnalyserReady={handleAnalyserReady}
+        />
       )}
     </>
   )

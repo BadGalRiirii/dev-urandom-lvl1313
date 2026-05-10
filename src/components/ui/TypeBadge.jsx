@@ -1,13 +1,13 @@
 import './TypeBadge.css'
 
 const TYPE_COLORS = {
-  pdf:   { bg: 'rgba(200,30,30,0.12)', border: 'rgba(200,30,30,0.4)', text: '#e05050' },
-  epub:  { bg: 'rgba(60,120,200,0.12)', border: 'rgba(60,120,200,0.4)', text: '#6090d0' },
-  post:  { bg: 'rgba(230,180,0,0.1)', border: 'rgba(230,180,0,0.3)', text: '#e6b400' },
-  music: { bg: 'rgba(100,200,100,0.1)', border: 'rgba(100,200,100,0.3)', text: '#60c060' },
-  book:  { bg: 'rgba(180,100,200,0.1)', border: 'rgba(180,100,200,0.3)', text: '#b464c8' },
-  film:  { bg: 'rgba(200,150,50,0.1)', border: 'rgba(200,150,50,0.3)', text: '#c89632' },
-  series: { bg: 'rgba(80,180,200,0.1)', border: 'rgba(80,180,200,0.3)', text: '#50b4c8' },
+  pdf:    { bg: 'rgba(255,50,50,0.12)',    border: 'rgba(255,50,50,0.4)',    text: '#ff6060' },
+  epub:   { bg: 'rgba(0,255,65,0.08)',     border: 'rgba(0,255,65,0.3)',     text: '#00ff41' },
+  post:   { bg: 'rgba(0,255,65,0.06)',     border: 'rgba(0,255,65,0.22)',    text: '#00ff41' },
+  music:  { bg: 'rgba(127,255,0,0.08)',    border: 'rgba(127,255,0,0.25)',   text: '#7fff00' },
+  book:   { bg: 'rgba(0,255,65,0.06)',     border: 'rgba(0,255,65,0.22)',    text: '#00cc33' },
+  film:   { bg: 'rgba(255,180,50,0.08)',   border: 'rgba(255,180,50,0.25)', text: '#ffb432' },
+  series: { bg: 'rgba(0,255,65,0.06)',     border: 'rgba(0,255,65,0.2)',     text: '#00dd44' },
 }
 
 export default function TypeBadge({ type = 'post' }) {

@@ -1,35 +1,59 @@
 .hero {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 560px;
+  gap: 22px;
+  max-width: 580px;
 }
 
 .hero-chapter-stamp {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+.hero-ornament {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 2px;
+}
+.hero-ornament-line {
+  flex: 1;
+  max-width: 60px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201, 168, 71, 0.45));
+}
+.hero-ornament-line.right {
+  background: linear-gradient(to left, transparent, rgba(201, 168, 71, 0.45));
+}
+.hero-ornament-mark {
+  font-size: 0.7rem;
+  color: rgba(201, 168, 71, 0.6);
+  letter-spacing: 0.2em;
 }
 
 .hero-title {
-  font-size: clamp(5rem, 10vw, 9rem);
-  line-height: 0.9;
+  font-size: clamp(5rem, 10vw, 9.5rem);
+  line-height: 0.88;
   letter-spacing: -0.01em;
   color: var(--cream);
+  font-style: italic;
+  font-weight: 600;
   position: relative;
 }
 
 .hero-sub {
-  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  font-size: clamp(1rem, 1.5vw, 1.12rem);
   font-style: italic;
   color: var(--muted);
-  line-height: 1.5;
-  max-width: 380px;
+  line-height: 1.65;
+  max-width: 400px;
+  letter-spacing: 0.01em;
 }
 
 .hero-ctas {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 @media (max-width: 768px) {

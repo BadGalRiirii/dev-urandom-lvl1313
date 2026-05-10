@@ -1,18 +1,14 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import BookCarousel from '../components/library/BookCarousel'
-import TypeBadge from '../components/ui/TypeBadge'
+import SpineMosaic from '../components/library/SpineMosaic'
 import { getBooks } from '../lib/api'
+import liliesImg from '../assets/lilies.jpg'
+import catPaintingImg from '../assets/cat-painting.jpg'
 import './Library.css'
 
-const PLACEHOLDER = [
-  { id: 'ph1', title: 'Loading...', author: '', file_type: 'pdf', cover_color: '#333' },
-]
-
 export default function Library() {
-  const [books, setBooks] = useState(PLACEHOLDER)
+  const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all')
 
   useEffect(() => {
     getBooks()
@@ -21,7 +17,8 @@ export default function Library() {
       .finally(() => setLoading(false))
   }, [])
 
-  const filtered = filter === 'all' ? books : books.filter((b) => b.file_type === filter)
+  const epubBooks = books.filter((b) => b.file_type === 'epub')
+  const pdfBooks  = books.filter((b) => b.file_type === 'pdf')
 
   return (
     <div className="library-page page">
@@ -35,30 +32,44 @@ export default function Library() {
           <h1 className="library-title display">The Library</h1>
           <p className="library-sub serif">every spine tells a story</p>
         </motion.div>
-
-        <div className="library-filters">
-          {['all', 'pdf', 'epub'].map((f) => (
-            <button
-              key={f}
-              className={`pill ${filter === f ? 'active' : ''}`}
-              onClick={() => setFilter(f)}
-            >
-              {f === 'all' ? 'All' : f.toUpperCase()}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {loading ? (
+      {loading && (
         <div className="library-loading">
-          <div className="skeleton" style={{ height: 240, width: '60%', margin: '0 auto' }} />
+          <div className="skeleton" style={{ height: 400, width: '70%', margin: '0 auto' }} />
         </div>
-      ) : filtered.length === 0 ? (
+      )}
+
+      {!loading && books.length === 0 && (
         <div className="library-empty mono">
           No books in the archive yet — upload some via /admin
         </div>
-      ) : (
-        <BookCarousel books={filtered} />
+      )}
+
+      {!loading && epubBooks.length > 0 && (
+        <SpineMosaic
+          books={epubBooks}
+          mosaicImage={liliesImg}
+          title="Lilies"
+          type="EPUB"
+        />
+      )}
+
+      {!loading && epubBooks.length > 0 && pdfBooks.length > 0 && (
+        <div className="mosaic-divider">
+          <div className="mosaic-divider-line" />
+          <span className="mosaic-divider-mark">· · ·</span>
+          <div className="mosaic-divider-line" />
+        </div>
+      )}
+
+      {!loading && pdfBooks.length > 0 && (
+        <SpineMosaic
+          books={pdfBooks}
+          mosaicImage={catPaintingImg}
+          title="The Cat Painting"
+          type="PDF"
+        />
       )}
     </div>
   )

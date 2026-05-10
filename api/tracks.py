@@ -30,7 +30,7 @@ async def upload_track(
     file: UploadFile = File(...),
     title: str = Form(...),
     artist: str = Form(""),
-    cover_color: str = Form("#e6b400"),
+    cd_image: int = Form(1),
     _: str = Depends(verify_token),
 ):
     sb = get_supabase()
@@ -41,7 +41,8 @@ async def upload_track(
         sb.storage.from_("music").upload(file_path, content, {"content-type": file.content_type})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Storage upload failed: {str(e)}")
-    record = {"title": title, "artist": artist, "file_path": file_path, "cover_color": cover_color}
+    # cd_image is encoded in cover_color as "cd:N" (avoids schema migration)
+    record = {"title": title, "artist": artist, "file_path": file_path, "cover_color": f"cd:{cd_image}"}
     try:
         res = sb.table("tracks").insert(record).execute()
         return res.data[0]

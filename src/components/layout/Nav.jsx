@@ -12,17 +12,17 @@ const links = [
 export default function Nav() {
   const location = useLocation()
   const chapterMap = {
-    '/': 'Chapter 01 — The Archive',
-    '/library': 'Chapter 02 — The Library',
-    '/journal': 'Chapter 03 — The Journal',
-    '/music': 'Chapter 04 — The Music',
-    '/read': 'Chapter 02 — Reading',
-    '/post': 'Chapter 03 — Reading',
+    '/': 'SYS://HOME',
+    '/library': 'SYS://LIBRARY',
+    '/journal': 'SYS://JOURNAL',
+    '/music': 'SYS://MUSIC',
+    '/read': 'SYS://READING',
+    '/post': 'SYS://JOURNAL',
   }
   const currentPath = Object.keys(chapterMap).find(k =>
     k !== '/' && location.pathname.startsWith(k)
   ) || (location.pathname === '/' ? '/' : null)
-  const chapterLabel = chapterMap[currentPath] || 'Chapter 01 — The Archive'
+  const chapterLabel = chapterMap[currentPath] || 'SYS://HOME'
 
   return (
     <motion.nav

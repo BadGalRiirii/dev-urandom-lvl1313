@@ -2,16 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import './ReaderToolbar.css'
 
-const THEMES = [
-  { id: 'cottage', label: 'Cottage' },
-  { id: 'midnight', label: 'Forest' },
-  { id: 'sakura', label: 'Sakura' },
-  { id: 'wisteria', label: 'Wisteria' },
-  { id: 'scholar', label: 'Scholar' },
-  { id: 'cyberpunk', label: 'Cyber' },
-]
-
-export default function ReaderToolbar({ theme, setTheme, fontSize, setFontSize, progress }) {
+export default function ReaderToolbar({ mode, setMode, fontSize, setFontSize, progress }) {
   return (
     <motion.div
       className="reader-toolbar"
@@ -21,16 +12,13 @@ export default function ReaderToolbar({ theme, setTheme, fontSize, setFontSize, 
     >
       <div className="toolbar-left">
         <Link to="/library" className="toolbar-back mono" title="Back to library">←</Link>
-        <div className="toolbar-themes">
-          {THEMES.map((t) => (
-            <button
-              key={t.id}
-              className={`theme-dot ${theme === t.id ? 'active' : ''}`}
-              onClick={() => setTheme(t.id)}
-              title={t.label}
-            />
-          ))}
-        </div>
+        <button
+          className="toolbar-mode-btn mono"
+          onClick={() => setMode(m => m === 'dark' ? 'light' : 'dark')}
+          title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {mode === 'dark' ? '☀' : '🌙'}
+        </button>
       </div>
 
       <div className="toolbar-center">
