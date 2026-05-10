@@ -1,0 +1,161 @@
+/* ══════════════════════════════════════════════════════
+   SPINE MOSAIC — Art Nouveau
+══════════════════════════════════════════════════════ */
+
+.spine-mosaic-section {
+  padding: 72px 40px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+}
+
+/* ─── Meta header ─────────────────────────────────── */
+.mosaic-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mosaic-meta-type {
+  font-family: var(--font-sc);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  background: rgba(201, 168, 71, 0.06);
+  border: 1px solid rgba(201, 168, 71, 0.22);
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+
+.mosaic-meta-count {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: rgba(240, 226, 204, 0.38);
+  text-transform: uppercase;
+}
+
+.mosaic-meta-divider {
+  color: rgba(240, 226, 204, 0.18);
+  font-size: 0.8rem;
+}
+
+.mosaic-meta-label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: rgba(240, 226, 204, 0.55);
+  letter-spacing: 0.02em;
+}
+
+/* ─── Grid ────────────────────────────────────────── */
+.mosaic-grid {
+  display: grid;
+  gap: 2px;
+  box-shadow:
+    0 20px 80px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(201, 168, 71, 0.1),
+    0 0 120px rgba(45, 120, 112, 0.05);
+}
+
+/* ─── Each spine tile ─────────────────────────────── */
+.mosaic-spine {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  transform-origin: bottom center;
+  will-change: transform, filter;
+  box-shadow:
+    inset -4px 0 14px rgba(0, 0, 0, 0.5),
+    inset 2px 0 4px rgba(255, 255, 255, 0.03);
+}
+
+.mosaic-spine.hovered {
+  box-shadow:
+    inset -4px 0 14px rgba(0, 0, 0, 0.25),
+    0 0 32px rgba(201, 168, 71, 0.2),
+    0 0 80px rgba(45, 120, 112, 0.1);
+  z-index: 2;
+}
+
+/* ─── Title reveal area ───────────────────────────── */
+.mosaic-title-reveal {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mosaic-title-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.mosaic-reveal-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--cream);
+  letter-spacing: 0.03em;
+  text-shadow:
+    0 0 32px rgba(201, 168, 71, 0.3),
+    0 0 80px rgba(201, 168, 71, 0.1);
+  line-height: 1.05;
+}
+
+.mosaic-reveal-author {
+  font-family: var(--font-sc);
+  font-size: 0.62rem;
+  color: rgba(200, 122, 88, 0.8);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.mosaic-reveal-hint {
+  font-family: var(--font-sc);
+  font-size: 0.55rem;
+  color: var(--yellow);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin-top: 2px;
+}
+
+.mosaic-reveal-idle {
+  font-family: var(--font-sc);
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(240, 226, 204, 0.18);
+}
+
+/* ─── Divider between sections ────────────────────── */
+.mosaic-divider {
+  width: 80%;
+  max-width: 700px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 40px;
+}
+
+.mosaic-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201, 168, 71, 0.28), transparent);
+}
+
+.mosaic-divider-mark {
+  font-family: var(--font-sc);
+  font-size: 0.5rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 71, 0.38);
+  white-space: nowrap;
+}

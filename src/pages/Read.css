@@ -3,28 +3,8 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: var(--reader-bg, var(--bg));
-  color: var(--reader-text, var(--cream));
 }
 
-.reader-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.35;
-  pointer-events: none;
-}
-
-.reader-canvas-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.25);
-  pointer-events: none;
-}
-
-/* Container for EpubReader / PdfReader — both are position:fixed so this
-   is just a semantic wrapper; no padding, no overflow restrictions. */
 .reader-content {
   position: relative;
   z-index: 2;

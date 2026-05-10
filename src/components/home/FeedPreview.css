@@ -1,21 +1,30 @@
 .feed-preview {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-width: 380px;
+  gap: 16px;
+  max-width: 360px;
   width: 100%;
 }
 
 .feed-header {
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .feed-label {
-  font-size: 0.65rem;
-  color: var(--yellow);
-  letter-spacing: 0.12em;
+  font-family: var(--font-sc);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
+  color: rgba(201, 168, 71, 0.7);
+  white-space: nowrap;
+}
+
+.feed-header-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(201, 168, 71, 0.3), transparent);
 }
 
 .feed-list {
@@ -24,25 +33,55 @@
   gap: 8px;
 }
 
+/* ── Skeleton loading ── */
+.feed-card-skeleton {
+  padding: 14px 16px;
+  background: rgba(21, 42, 38, 0.6);
+  border: 1px solid rgba(201, 168, 71, 0.1);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skel-badge {
+  width: 52px;
+  height: 18px;
+  border-radius: 2px;
+}
+.skel-title {
+  width: 80%;
+  height: 14px;
+  border-radius: 2px;
+}
+.skel-sub {
+  width: 55%;
+  height: 11px;
+  border-radius: 2px;
+}
+
+/* ── Feed card ── */
 .feed-card {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 14px 16px;
-  background: rgba(20, 16, 8, 0.7);
-  border: 1px solid var(--border);
+  background: rgba(14, 31, 28, 0.75);
+  border: 1px solid rgba(201, 168, 71, 0.14);
+  border-left: 2px solid rgba(201, 168, 71, 0.35);
   border-radius: var(--radius);
   cursor: pointer;
   transition: var(--transition);
   position: relative;
   text-decoration: none;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
 }
 
 .feed-card:hover {
-  border-color: rgba(230, 180, 0, 0.35);
-  background: rgba(20, 16, 8, 0.9);
-  transform: translateX(4px);
+  border-color: rgba(201, 168, 71, 0.32);
+  border-left-color: rgba(201, 168, 71, 0.75);
+  background: rgba(21, 42, 38, 0.85);
+  transform: translateX(5px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35), 0 0 0 0 transparent;
 }
 
 .feed-card-top {
@@ -52,23 +91,26 @@
 }
 
 .feed-card-meta {
-  font-size: 0.6rem;
-  color: var(--muted2);
-  letter-spacing: 0.08em;
+  font-size: 0.55rem;
+  color: rgba(240, 226, 204, 0.3);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .feed-card-title {
-  font-size: 0.88rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-style: italic;
   font-weight: 500;
   color: var(--cream);
-  line-height: 1.4;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
 }
 
 .feed-card-sub {
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   color: var(--muted);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .feed-card-arrow {
@@ -79,8 +121,18 @@
   color: var(--yellow);
   opacity: 0;
   transition: var(--transition);
+  transform: translateX(-4px);
 }
 
 .feed-card:hover .feed-card-arrow {
-  opacity: 1;
+  opacity: 0.8;
+  transform: translateX(0);
+}
+
+.feed-empty {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: rgba(240, 226, 204, 0.2);
+  text-align: center;
+  padding: 24px 0;
 }

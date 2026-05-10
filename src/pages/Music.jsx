@@ -4,8 +4,11 @@ import RecordCarousel from '../components/music/RecordCarousel'
 import { getTracks } from '../lib/api'
 import './Music.css'
 
-export default function Music({ onPlay }) {
-  const [tracks, setTracks] = useState([])
+export default function Music({
+  onPlay, onPause, onResume, onEject, isAudioPlaying,
+  audioProgress, audioDuration, onRegisterEnded, onSeek, analyserNode,
+}) {
+  const [tracks,  setTracks]  = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -19,9 +22,9 @@ export default function Music({ onPlay }) {
     <div className="music-page page">
       <div className="music-header">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <div className="music-eyebrow mono">Chapter 04</div>
-          <h1 className="music-title display">The Music</h1>
-          <p className="music-sub serif">sounds that stay with you</p>
+          <div className="music-eyebrow mono">/dev/music</div>
+          <h1 className="music-title display">THE MUSIC</h1>
+          <p className="music-sub">sounds loaded into memory</p>
         </motion.div>
       </div>
 
@@ -38,7 +41,19 @@ export default function Music({ onPlay }) {
           No tracks yet — upload some via /admin
         </div>
       ) : (
-        <RecordCarousel tracks={tracks} onPlay={onPlay} />
+        <RecordCarousel
+          tracks={tracks}
+          onPlay={onPlay}
+          onPause={onPause}
+          onResume={onResume}
+          onEject={onEject}
+          isAudioPlaying={isAudioPlaying}
+          audioProgress={audioProgress}
+          audioDuration={audioDuration}
+          onRegisterEnded={onRegisterEnded}
+          onSeek={onSeek}
+          analyserNode={analyserNode}
+        />
       )}
     </div>
   )

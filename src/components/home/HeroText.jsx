@@ -5,11 +5,11 @@ import './HeroText.css'
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.12 } },
+  show: { transition: { staggerChildren: 0.1 } },
 }
 const item = {
-  hidden: { opacity: 0, y: 30 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+  hidden: { opacity: 0, y: 28 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] } },
 }
 
 export default function HeroText() {
@@ -19,6 +19,12 @@ export default function HeroText() {
         <ChapterCard volume="Vol. I" title="Selected Works" stamp="riri/dev/urandom" />
       </motion.div>
 
+      <motion.div variants={item} className="hero-ornament">
+        <span className="hero-ornament-line" />
+        <span className="hero-ornament-mark">✦</span>
+        <span className="hero-ornament-line right" />
+      </motion.div>
+
       <motion.h1 className="hero-title display" variants={item}>
         Every<br />
         <span className="text-red">thing</span>{' '}
@@ -26,16 +32,16 @@ export default function HeroText() {
         Loved
       </motion.h1>
 
-      <motion.p className="hero-sub serif" variants={item}>
-        a personal archive of obsessions — books, films, sounds, & half-finished thoughts
+      <motion.p className="hero-sub" variants={item}>
+        a personal archive of obsessions — books, films, sounds, &amp; half-finished thoughts
       </motion.p>
 
       <motion.div className="hero-ctas" variants={item}>
         <Link to="/library" className="btn btn-yellow">
-          <span>↗</span> Enter the Archive
+          ↗ Enter the Archive
         </Link>
         <Link to="/music" className="btn btn-red">
-          <span>♪</span> Play Something
+          ♪ Play Something
         </Link>
       </motion.div>
     </motion.div>

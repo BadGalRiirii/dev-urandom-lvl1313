@@ -2,12 +2,53 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import AdminLogin from '../components/admin/AdminLogin'
 import PostEditor from '../components/blog/PostEditor'
+import cd1  from '../assets/cds/cd1.jpg'
+import cd2  from '../assets/cds/cd2.jpg'
+import cd3  from '../assets/cds/cd3.jpg'
+import cd4  from '../assets/cds/cd4.jpg'
+import cd5  from '../assets/cds/cd5.jpg'
+import cd6  from '../assets/cds/cd6.jpg'
+import cd7  from '../assets/cds/cd7.jpg'
+import cd8  from '../assets/cds/cd8.jpg'
+import cd9  from '../assets/cds/cd9.jpg'
+import cd10 from '../assets/cds/cd10.jpg'
+import cd11 from '../assets/cds/cd11.jpg'
+import cd12 from '../assets/cds/cd12.jpg'
+import cd13 from '../assets/cds/cd13.jpg'
 import {
   getAllPosts, getPosts, createPost, updatePost, deletePost,
   getBooks, uploadBook, deleteBook,
   getTracks, uploadTrack, deleteTrack,
 } from '../lib/api'
 import './Admin.css'
+
+const CD_COVERS = [cd1, cd2, cd3, cd4, cd5, cd6, cd7, cd8, cd9, cd10, cd11, cd12, cd13]
+
+// ── CD Image Picker ───────────────────────────────────────────────────────────
+function CdImagePicker({ value, onChange }) {
+  return (
+    <div className="cd-image-picker">
+      <span className="mono cd-picker-label">CD Cover</span>
+      <div className="cd-picker-grid">
+        {CD_COVERS.map((img, i) => {
+          const num = i + 1
+          return (
+            <button
+              key={num}
+              type="button"
+              className={`cd-picker-item${value === num ? ' cd-picker-item--on' : ''}`}
+              onClick={() => onChange(num)}
+              title={`cd${num}`}
+            >
+              <img src={img} alt={`cd${num}`} />
+              <span className="mono">{num}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 // ── Drag & Drop Upload Zone ───────────────────────────────────────────────────
 function DropZone({ accept, acceptLabel, file, onFile }) {
@@ -55,33 +96,56 @@ function DropZone({ accept, acceptLabel, file, onFile }) {
 // ── Upload Form (books or tracks) ─────────────────────────────────────────────
 function UploadForm({ type, accept, acceptLabel, onUpload }) {
   const [file, setFile] = useState(null)
-  const [meta, setMeta] = useState({ title: '', author: '', artist: '', cover_color: '#e6b400' })
-  const [uploading, setUploading] = useState(false)
-  const [progress, setProgress] = useState('')
+  const [meta, setMeta] = useState({ title: '', author: '', artist: '', cd_image: 1 })
+  const [status, setStatus] = useState('idle') // 'idle' | 'uploading' | 'done' | 'error'
+  const [uploadPct, setUploadPct] = useState(0)
+  const [errorMsg, setErrorMsg] = useState('')
+  const timerRef = useRef(null)
 
   const reset = () => {
     setFile(null)
-    setMeta({ title: '', author: '', artist: '', cover_color: '#e6b400' })
-    setProgress('')
+    setMeta({ title: '', author: '', artist: '', cd_image: 1 })
+    setStatus('idle')
+    setUploadPct(0)
+    setErrorMsg('')
   }
+
+  const startFakeProgress = () => {
+    let pct = 0
+    timerRef.current = setInterval(() => {
+      pct = Math.min(pct + Math.random() * 10 + 3, 88)
+      setUploadPct(Math.round(pct))
+      if (pct >= 88) clearInterval(timerRef.current)
+    }, 160)
+  }
+
+  useEffect(() => () => clearInterval(timerRef.current), [])
 
   const submit = async (e) => {
     e.preventDefault()
     if (!file || !meta.title) return
-    setUploading(true)
-    setProgress('Uploading…')
+    clearInterval(timerRef.current)
+    setStatus('uploading')
+    setUploadPct(0)
+    startFakeProgress()
     try {
       const fd = new FormData()
       fd.append('file', file)
-      Object.entries(meta).forEach(([k, v]) => v && fd.append(k, v))
+      Object.entries(meta).forEach(([k, v]) => v && fd.append(k, String(v)))
       await onUpload(fd)
-      setProgress('Done!')
-      setTimeout(() => { reset(); onUpload.__refresh?.() }, 1200)
+      clearInterval(timerRef.current)
+      setUploadPct(100)
+      setStatus('done')
+      setTimeout(reset, 1800)
     } catch (err) {
-      setProgress(`Error: ${err.message}`)
-      setUploading(false)
+      clearInterval(timerRef.current)
+      setErrorMsg(err.message)
+      setStatus('error')
+      setUploadPct(0)
     }
   }
+
+  const uploading = status === 'uploading'
 
   return (
     <form className="upload-form" onSubmit={submit}>
@@ -107,23 +171,37 @@ function UploadForm({ type, accept, acceptLabel, onUpload }) {
             onChange={(e) => setMeta(m => ({ ...m, artist: e.target.value }))}
           />
         )}
-        <div className="upload-color-row">
-          <label className="mono" style={{ fontSize: '0.68rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-            Spine color
-          </label>
-          <input
-            type="color"
-            value={meta.cover_color}
-            onChange={(e) => setMeta(m => ({ ...m, cover_color: e.target.value }))}
-            style={{ width: 36, height: 32, padding: 2, background: 'none', border: '1px solid var(--border)', borderRadius: 4, cursor: 'pointer' }}
-          />
-          <span className="mono" style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{meta.cover_color}</span>
-        </div>
       </div>
+      {type === 'track' && (
+        <CdImagePicker
+          value={meta.cd_image}
+          onChange={(n) => setMeta(m => ({ ...m, cd_image: n }))}
+        />
+      )}
+      {status !== 'idle' && (
+        <div className="upload-progress-wrap">
+          <div className="upload-pbar">
+            <motion.div
+              className={`upload-pbar-fill${status === 'done' ? ' upload-pbar-fill--done' : ''}${status === 'error' ? ' upload-pbar-fill--err' : ''}`}
+              animate={{ width: `${uploadPct}%` }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+            />
+          </div>
+          <span className={`upload-pbar-label mono${status === 'error' ? ' upload-pbar-label--err' : ''}`}>
+            {status === 'uploading' && `Uploading… ${uploadPct}%`}
+            {status === 'done' && '✓ Upload complete'}
+            {status === 'error' && errorMsg}
+          </span>
+        </div>
+      )}
+
       <div className="upload-actions">
-        {progress && <span className={`upload-status mono ${progress.startsWith('Error') ? 'upload-status--err' : ''}`}>{progress}</span>}
-        <button type="submit" className="btn btn-yellow" disabled={uploading || !file || !meta.title}>
-          {uploading ? 'Uploading…' : 'Upload'}
+        <button
+          type="submit"
+          className={`btn btn-yellow${uploading ? ' btn-uploading' : ''}`}
+          disabled={uploading || status === 'done' || !file || !meta.title}
+        >
+          {uploading ? `Uploading… ${uploadPct}%` : status === 'done' ? '✓ Done' : 'Upload'}
         </button>
       </div>
     </form>
@@ -167,7 +245,7 @@ function BooksTab() {
           <div className="content-list">
             {books.map((b) => (
               <div key={b.id} className="content-row">
-                <span className="content-swatch" style={{ background: b.cover_color || '#e6b400' }} />
+                <span className="content-swatch" style={{ background: b.cover_color || '#00ff41' }} />
                 <div className="content-info">
                   <span className="content-title">{b.title}</span>
                   {b.author && <span className="content-meta mono">{b.author}</span>}
@@ -220,7 +298,7 @@ function MusicTab({ onPlay }) {
           <div className="content-list">
             {tracks.map((t) => (
               <div key={t.id} className="content-row">
-                <span className="content-swatch" style={{ background: t.cover_color || '#e6b400' }} />
+                <span className="content-swatch" style={{ background: t.cover_color?.startsWith('cd:') ? 'rgba(209,96,31,0.55)' : (t.cover_color || '#e6b400') }} />
                 <div className="content-info">
                   <span className="content-title">{t.title}</span>
                   {t.artist && <span className="content-meta mono">{t.artist}</span>}

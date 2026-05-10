@@ -1,22 +1,31 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import TypeBadge from '../ui/TypeBadge'
 import { getBooks, getPosts, getTracks } from '../../lib/api'
 import './FeedPreview.css'
 
-const PLACEHOLDER = [
-  { id: 'p1', type: 'post', label: 'Journal', title: 'Notes on Wong Kar Wai\'s color grammar', to: '/journal' },
-  { id: 'p2', type: 'epub', label: 'Epub', title: 'Loading from library...', to: '/library' },
-  { id: 'p3', type: 'music', label: 'Music', title: 'Loading from collection...', to: '/music' },
-]
+function SkeletonCard({ delay }) {
+  return (
+    <motion.div
+      className="feed-card-skeleton"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay, duration: 0.3 }}
+    >
+      <div className="skeleton skel-badge" />
+      <div className="skeleton skel-title" />
+      <div className="skeleton skel-sub" />
+    </motion.div>
+  )
+}
 
 function FeedCard({ item, index }) {
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, x: 16 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.3 + index * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ delay: index * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
       <Link to={item.to || '#'} className="feed-card">
         <div className="feed-card-top">
@@ -32,14 +41,12 @@ function FeedCard({ item, index }) {
 }
 
 export default function FeedPreview() {
-  const [items, setItems] = useState(PLACEHOLDER)
+  const [items, setItems] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [books, posts, tracks] = await Promise.allSettled([
-          getBooks(), getPosts(), getTracks(),
-        ])
+    Promise.allSettled([getBooks(), getPosts(), getTracks()])
+      .then(([books, posts, tracks]) => {
         const merged = []
         if (posts.status === 'fulfilled' && posts.value?.length) {
           merged.push(...posts.value.slice(0, 2).map(p => ({
@@ -59,21 +66,39 @@ export default function FeedPreview() {
             sub: t.artist, to: '/music', meta: 'Track',
           })))
         }
-        if (merged.length) setItems(merged.slice(0, 5))
-      } catch {}
-    }
-    load()
+        setItems(merged.length ? merged.slice(0, 5) : [])
+      })
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false))
   }, [])
 
   return (
     <div className="feed-preview">
       <div className="feed-header">
-        <span className="feed-label mono">// latest drop</span>
+        <span className="feed-label">Recent Additions</span>
+        <div className="feed-header-line" />
       </div>
+
       <div className="feed-list">
-        {items.map((item, i) => (
-          <FeedCard key={item.id} item={item} index={i} />
-        ))}
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div key="skeletons" exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+              {[0, 1, 2].map(i => <SkeletonCard key={i} delay={i * 0.07} />)}
+            </motion.div>
+          ) : items?.length === 0 ? (
+            <motion.p
+              key="empty"
+              className="feed-empty mono"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            >
+              — archive is empty —
+            </motion.p>
+          ) : (
+            <motion.div key="items">
+              {items.map((item, i) => <FeedCard key={item.id} item={item} index={i} />)}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

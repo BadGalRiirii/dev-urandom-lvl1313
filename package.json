@@ -25,6 +25,9 @@
     "react-pdf": "^10.4.1",
     "react-router-dom": "^7.15.0"
   },
+  "overrides": {
+    "@xmldom/xmldom": "^0.9.10"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.14",

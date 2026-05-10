@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import './BookSpine.css'
 
 const SPINE_COLORS = [
-  '#c81e1e','#e6b400','#1a4a7a','#2d6a2d',
-  '#7a1a7a','#8b4500','#1a5a5a','#4a1a00',
+  '#00344a','#0a1e38','#1a0044','#001a2c',
+  '#2a0050','#003020','#1a1a40','#002a44',
 ]
 
 export default function BookSpine({ book, index, isCenter, onClick }) {

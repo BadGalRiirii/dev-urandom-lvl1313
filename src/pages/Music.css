@@ -1,11 +1,12 @@
 .music-page {
-  padding: 100px 40px 60px;
+  padding: 84px 40px 40px;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .music-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .music-eyebrow {

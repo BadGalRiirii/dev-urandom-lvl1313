@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 9990;
-  background: var(--bg);
+  background: #060e0c;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -11,62 +11,69 @@
 .boot-terminal {
   width: 560px;
   max-width: 90vw;
-  background: #0d0d0d;
-  border: 1px solid rgba(230, 180, 0, 0.25);
-  border-radius: 8px;
+  background: #091614;
+  border: 1px solid rgba(201, 168, 71, 0.28);
+  border-radius: 3px;
   overflow: hidden;
-  box-shadow: 0 0 80px rgba(230, 180, 0, 0.06), 0 0 200px rgba(200, 30, 30, 0.04);
+  box-shadow:
+    0 0 60px rgba(201, 168, 71, 0.08),
+    0 0 200px rgba(45, 120, 112, 0.06),
+    0 24px 80px rgba(0, 0, 0, 0.9);
 }
 
 .boot-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
-  background: #111;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 10px 16px;
+  background: rgba(201, 168, 71, 0.04);
+  border-bottom: 1px solid rgba(201, 168, 71, 0.15);
 }
 
 .boot-dot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
 }
-.boot-dot.red    { background: #ff5f56; }
-.boot-dot.yellow { background: #ffbd2e; }
-.boot-dot.green  { background: #27c93f; }
+.boot-dot.coral { background: #c87a58; box-shadow: 0 0 6px rgba(200, 122, 88, 0.7); }
+.boot-dot.gold  { background: #c9a847; box-shadow: 0 0 6px rgba(201, 168, 71, 0.7); }
+.boot-dot.teal  { background: #2d7870; box-shadow: 0 0 6px rgba(45, 120, 112, 0.7); }
 
 .boot-title {
   margin-left: 8px;
-  font-size: 0.72rem;
-  color: var(--muted);
-  letter-spacing: 0.06em;
+  font-size: 0.65rem;
+  color: rgba(201, 168, 71, 0.45);
+  letter-spacing: 0.14em;
+  font-family: var(--font-mono);
 }
 
 .boot-body {
-  padding: 24px 20px;
-  min-height: 120px;
+  padding: 28px 24px;
+  min-height: 100px;
 }
 
 .boot-line {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   line-height: 2;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
+  font-family: var(--font-mono);
 }
 .boot-line.done {
-  color: var(--muted);
+  color: rgba(201, 168, 71, 0.32);
 }
 .boot-line.active {
-  color: var(--yellow);
+  color: rgba(240, 226, 204, 0.88);
+  text-shadow: 0 0 10px rgba(201, 168, 71, 0.4);
 }
 
 .boot-cursor {
   display: inline-block;
-  width: 8px;
+  width: 7px;
   height: 1em;
-  background: var(--yellow);
+  background: rgba(201, 168, 71, 0.85);
   margin-left: 2px;
   vertical-align: text-bottom;
+  box-shadow: 0 0 8px rgba(201, 168, 71, 0.7);
   animation: blink 0.8s step-end infinite;
 }
 
