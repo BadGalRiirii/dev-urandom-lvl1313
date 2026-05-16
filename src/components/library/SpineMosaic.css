@@ -135,6 +135,41 @@
   color: rgba(240, 226, 204, 0.18);
 }
 
+/* ─── Responsive ─────────────────────────────────── */
+@media (max-width: 768px) {
+  .spine-mosaic-section {
+    padding: 48px 0 40px;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  .mosaic-meta {
+    padding: 0 20px;
+  }
+  /* Horizontal scroll container for the grid */
+  .mosaic-grid-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 20px 12px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 168, 71, 0.25) transparent;
+  }
+  .mosaic-grid-scroll::-webkit-scrollbar { height: 3px; }
+  .mosaic-grid-scroll::-webkit-scrollbar-thumb {
+    background: rgba(201, 168, 71, 0.25);
+    border-radius: 2px;
+  }
+  .mosaic-title-reveal { padding: 0 20px; }
+}
+
+@media (max-width: 480px) {
+  .spine-mosaic-section { padding: 36px 0 32px; }
+  .mosaic-meta { padding: 0 16px; flex-wrap: wrap; gap: 8px; }
+  .mosaic-grid-scroll { padding: 0 16px 10px; }
+  .mosaic-title-reveal { padding: 0 16px; }
+  .mosaic-reveal-title { font-size: 1.4rem; }
+}
+
 /* ─── Divider between sections ────────────────────── */
 .mosaic-divider {
   width: 80%;

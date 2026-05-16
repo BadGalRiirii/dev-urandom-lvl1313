@@ -1,11 +1,15 @@
 import os
-from fastapi import APIRouter, HTTPException, Depends
+import uuid
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from supabase import create_client
 from pydantic import BaseModel
 from typing import Optional
 from api.auth import verify_token
 
 router = APIRouter()
+
+MAX_IMAGE_SIZE = 10 * 1024 * 1024   # 10 MB
+ALLOWED_IMAGE_EXTS = {"jpg", "jpeg", "png", "gif", "webp", "avif"}
 
 
 def get_supabase():
@@ -21,6 +25,7 @@ class PostBody(BaseModel):
     related_title: Optional[str] = ""
     rating: Optional[int] = None
     published: Optional[bool] = True
+    cover_image: Optional[str] = None
 
 
 @router.get("/posts")
@@ -40,7 +45,8 @@ async def list_all_posts(_: str = Depends(verify_token)):
 @router.get("/posts/{post_id}")
 async def get_post(post_id: str):
     sb = get_supabase()
-    res = sb.table("posts").select("*").eq("id", post_id).single().execute()
+    # Only serve published posts on the public endpoint
+    res = sb.table("posts").select("*").eq("id", post_id).eq("published", True).single().execute()
     if not res.data:
         raise HTTPException(404, "Post not found")
     return res.data
@@ -65,3 +71,26 @@ async def delete_post(post_id: str, _: str = Depends(verify_token)):
     sb = get_supabase()
     sb.table("posts").delete().eq("id", post_id).execute()
     return {"deleted": True}
+
+
+@router.post("/upload/post-image")
+async def upload_post_image(
+    file: UploadFile = File(...),
+    _: str = Depends(verify_token),
+):
+    ext = (file.filename or "").rsplit(".", 1)[-1].lower()
+    if ext not in ALLOWED_IMAGE_EXTS:
+        raise HTTPException(400, "Unsupported image type")
+
+    content = await file.read()
+    if len(content) > MAX_IMAGE_SIZE:
+        raise HTTPException(400, "Image too large (max 10 MB)")
+
+    sb = get_supabase()
+    path = f"{uuid.uuid4()}.{ext}"
+    try:
+        sb.storage.from_("post-images").upload(path, content, {"content-type": file.content_type})
+    except Exception as e:
+        raise HTTPException(500, f"Storage upload failed: {str(e)}")
+    public = sb.storage.from_("post-images").get_public_url(path)
+    return {"url": public}

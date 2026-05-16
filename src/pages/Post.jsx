@@ -46,6 +46,12 @@ export default function Post() {
       >
         <Link to="/journal" className="post-back mono">← Journal</Link>
 
+        {post.cover_image && (
+          <div className="post-cover">
+            <img src={post.cover_image} alt="" />
+          </div>
+        )}
+
         <header className="post-header">
           <div className="post-meta">
             <TypeBadge type={post.category || 'post'} />

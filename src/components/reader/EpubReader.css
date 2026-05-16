@@ -1,7 +1,7 @@
-/* ── Shell ────────────────────────────────────────── */
+/* ── Shell ─────────────────────────────────────────── */
 .epub-reader {
   position: fixed;
-  top: 52px; left: 0; right: 0; bottom: 0;
+  top: 58px; left: 0; right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
 }
@@ -11,9 +11,9 @@
 ───────────────────────────────────────────────────── */
 .toc-backdrop {
   position: fixed;
-  top: 52px; left: 0; right: 0; bottom: 0;
+  top: 58px; left: 0; right: 0; bottom: 0;
   z-index: 40;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   animation: fade-in 0.2s ease forwards;
@@ -25,28 +25,28 @@
 
 .toc-panel {
   position: fixed;
-  top: 52px; left: 0; bottom: 0;
+  top: 58px; left: 0; bottom: 0;
   width: 300px;
   z-index: 50;
-  background: rgba(1, 3, 1, 0.98);
+  background: rgba(9, 22, 20, 0.98);
   backdrop-filter: blur(32px) saturate(160%);
   -webkit-backdrop-filter: blur(32px) saturate(160%);
-  border-right: 1px solid rgba(209, 96, 31, 0.12);
+  border-right: 1px solid rgba(45, 120, 112, 0.22);
   display: flex;
   flex-direction: column;
   transform: translateX(-100%);
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.6);
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.7);
 }
 .toc-panel.open { transform: translateX(0); }
 
 .toc-head {
-  padding: 18px 20px 14px;
-  font-size: 0.52rem;
+  padding: 20px 22px 16px;
+  font-size: 0.58rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(209, 96, 31, 0.3);
-  border-bottom: 1px solid rgba(209, 96, 31, 0.1);
+  color: rgba(201, 168, 71, 0.6);
+  border-bottom: 1px solid rgba(45, 120, 112, 0.18);
   flex-shrink: 0;
   font-family: var(--font-mono);
 }
@@ -54,14 +54,14 @@
 .toc-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 0 40px;
+  padding: 8px 0 48px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(209, 96, 31, 0.1) transparent;
+  scrollbar-color: rgba(45, 120, 112, 0.18) transparent;
 }
 .toc-scroll::-webkit-scrollbar { width: 2px; }
 .toc-scroll::-webkit-scrollbar-track { background: transparent; }
 .toc-scroll::-webkit-scrollbar-thumb {
-  background: rgba(209, 96, 31, 0.12);
+  background: rgba(45, 120, 112, 0.22);
   border-radius: 2px;
 }
 
@@ -72,32 +72,32 @@
   background: transparent;
   border: none;
   border-left: 2px solid transparent;
-  padding: 10px 24px 10px 18px;
-  font-size: 0.78rem;
+  padding: 12px 26px 12px 20px;
+  font-size: 0.82rem;
   line-height: 1.5;
-  color: rgba(209, 96, 31, 0.35);
+  color: rgba(240, 226, 204, 0.45);
   cursor: pointer;
   transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
 }
 .toc-btn:hover {
-  color: rgba(209, 96, 31, 0.85);
-  background: rgba(209, 96, 31, 0.03);
+  color: rgba(240, 226, 204, 0.88);
+  background: rgba(45, 120, 112, 0.06);
 }
 .toc-btn.active {
-  color: var(--green);
-  border-left-color: var(--green);
-  background: rgba(209, 96, 31, 0.06);
-  text-shadow: 0 0 8px rgba(209, 96, 31, 0.4);
+  color: var(--yellow);
+  border-left-color: var(--yellow);
+  background: rgba(201, 168, 71, 0.07);
+  text-shadow: 0 0 10px rgba(201, 168, 71, 0.35);
 }
 
 .toc-empty {
-  padding: 36px 20px;
-  font-size: 0.6rem;
-  color: rgba(209, 96, 31, 0.2);
+  padding: 40px 22px;
+  font-size: 0.65rem;
+  color: rgba(201, 168, 71, 0.3);
   letter-spacing: 0.1em;
   font-family: var(--font-mono);
 }
@@ -109,45 +109,47 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  height: 46px;
-  background: rgba(1, 3, 1, 0.75);
+  gap: 10px;
+  padding: 0 16px;
+  height: 52px;
+  background: rgba(9, 22, 20, 0.88);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border-bottom: 1px solid rgba(209, 96, 31, 0.1);
-  box-shadow: 0 1px 0 rgba(209, 96, 31, 0.06), 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(45, 120, 112, 0.18);
+  box-shadow:
+    0 1px 0 rgba(201, 168, 71, 0.05),
+    0 4px 24px rgba(0, 0, 0, 0.35);
 }
 
 .nav-arrow {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(209, 96, 31, 0.04);
-  border: 1px solid rgba(209, 96, 31, 0.2);
-  border-radius: 2px;
-  color: rgba(209, 96, 31, 0.7);
-  font-size: 1.15rem;
+  background: rgba(45, 120, 112, 0.06);
+  border: 1px solid rgba(45, 120, 112, 0.28);
+  border-radius: 3px;
+  color: rgba(201, 168, 71, 0.72);
+  font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease,
-              background 0.15s ease, transform 0.12s ease;
+              background 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
   user-select: none;
   font-family: var(--font-mono);
 }
 .nav-arrow:hover {
-  border-color: var(--green);
-  color: var(--green);
-  background: rgba(209, 96, 31, 0.08);
+  border-color: rgba(201, 168, 71, 0.65);
+  color: var(--yellow);
+  background: rgba(201, 168, 71, 0.09);
   transform: scale(1.06);
-  text-shadow: 0 0 8px rgba(209, 96, 31, 0.5);
+  box-shadow: 0 0 14px rgba(201, 168, 71, 0.2);
 }
 .nav-arrow:active { transform: scale(0.94); }
 .nav-arrow.dim {
-  opacity: 0.18;
+  opacity: 0.2;
   pointer-events: none;
 }
 
@@ -157,61 +159,61 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 2px;
-  padding: 6px 12px;
+  border-radius: 3px;
+  padding: 8px 14px;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .nav-chapter:hover {
-  background: rgba(209, 96, 31, 0.03);
-  border-color: rgba(209, 96, 31, 0.12);
+  background: rgba(45, 120, 112, 0.06);
+  border-color: rgba(45, 120, 112, 0.2);
 }
 
 .nav-label {
-  font-size: 0.6rem;
-  letter-spacing: 0.15em;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(209, 96, 31, 0.6);
+  color: rgba(201, 168, 71, 0.72);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   transition: color 0.15s ease;
-  font-family: var(--font-mono);
+  font-family: var(--font-sc);
 }
-.nav-chapter:hover .nav-label { color: rgba(209, 96, 31, 0.9); }
+.nav-chapter:hover .nav-label { color: var(--yellow); }
 
 .nav-dots {
-  font-size: 0.7rem;
-  color: rgba(209, 96, 31, 0.2);
-  letter-spacing: 0.3em;
+  font-size: 0.75rem;
+  color: rgba(201, 168, 71, 0.35);
+  letter-spacing: 0.35em;
   transition: color 0.15s ease;
   font-family: var(--font-mono);
 }
-.nav-chapter:hover .nav-dots { color: rgba(209, 96, 31, 0.4); }
+.nav-chapter:hover .nav-dots { color: rgba(201, 168, 71, 0.55); }
 
 .nav-caret {
   flex-shrink: 0;
-  font-size: 0.42rem;
-  color: rgba(209, 96, 31, 0.22);
+  font-size: 0.5rem;
+  color: rgba(201, 168, 71, 0.3);
   transition: color 0.15s ease, transform 0.2s ease;
   line-height: 1;
 }
 .nav-chapter:hover .nav-caret {
-  color: rgba(209, 96, 31, 0.5);
+  color: rgba(201, 168, 71, 0.6);
   transform: translateY(1px);
 }
 
 .nav-mode {
   flex-shrink: 0;
-  padding: 6px 14px;
-  background: rgba(209, 96, 31, 0.04);
-  border: 1px solid rgba(209, 96, 31, 0.2);
-  border-radius: 2px;
-  color: rgba(209, 96, 31, 0.65);
-  font-size: 0.6rem;
+  padding: 8px 18px;
+  background: rgba(45, 120, 112, 0.06);
+  border: 1px solid rgba(45, 120, 112, 0.28);
+  border-radius: 3px;
+  color: rgba(201, 168, 71, 0.72);
+  font-size: 0.68rem;
   letter-spacing: 0.1em;
   cursor: pointer;
   white-space: nowrap;
@@ -221,9 +223,9 @@
   font-family: var(--font-mono);
 }
 .nav-mode:hover {
-  border-color: var(--green);
-  color: var(--green);
-  background: rgba(209, 96, 31, 0.06);
+  border-color: rgba(201, 168, 71, 0.6);
+  color: var(--yellow);
+  background: rgba(201, 168, 71, 0.08);
   transform: scale(1.03);
 }
 .nav-mode:active { transform: scale(0.97); }
@@ -242,7 +244,7 @@
 .page-tap {
   position: absolute;
   top: 0; bottom: 0;
-  width: 72px;
+  width: 80px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -251,11 +253,11 @@
 }
 .page-tap.left  { left: 0; }
 .page-tap.right { right: 0; }
-.page-tap.left:hover  {
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.06), transparent);
+.page-tap.left:hover {
+  background: linear-gradient(to right, rgba(0,0,0,0.06), transparent);
 }
 .page-tap.right:hover {
-  background: linear-gradient(to left, rgba(0, 0, 0, 0.06), transparent);
+  background: linear-gradient(to left, rgba(0,0,0,0.06), transparent);
 }
 .page-tap.hidden { display: none; }
 
@@ -269,16 +271,210 @@
   overflow-x: hidden;
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: rgba(209, 96, 31, 0.14) transparent;
+  scrollbar-color: rgba(45, 120, 112, 0.2) transparent;
 }
-.epub-body::-webkit-scrollbar { width: 3px; }
+.epub-body::-webkit-scrollbar { width: 4px; }
 .epub-body::-webkit-scrollbar-track { background: transparent; }
 .epub-body::-webkit-scrollbar-thumb {
-  background: rgba(209, 96, 31, 0.18);
+  background: rgba(45, 120, 112, 0.22);
   border-radius: 2px;
 }
 .epub-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(209, 96, 31, 0.38);
+  background: rgba(201, 168, 71, 0.35);
+}
+
+/* ─────────────────────────────────────────────────────
+   Smooth chapter / mode jump fade
+───────────────────────────────────────────────────── */
+.epub-body.epub-jumping {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+.epub-body {
+  transition: opacity 0.18s ease;
+}
+
+/* ─────────────────────────────────────────────────────
+   Bookmark panel (right-side drawer)
+───────────────────────────────────────────────────── */
+.bm-panel {
+  position: fixed;
+  top: 58px; right: 0; bottom: 0;
+  width: 280px;
+  z-index: 50;
+  background: rgba(9, 22, 20, 0.98);
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  border-left: 1px solid rgba(45, 120, 112, 0.22);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.7);
+}
+.bm-panel.open { transform: translateX(0); }
+
+.bm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid rgba(45, 120, 112, 0.18);
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.bm-head-title {
+  font-size: 0.58rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 71, 0.6);
+  font-family: var(--font-mono);
+}
+
+.bm-add-btn {
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 3px;
+  border: 1px solid rgba(45, 120, 112, 0.35);
+  background: transparent;
+  color: rgba(201, 168, 71, 0.55);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.bm-add-btn:hover {
+  border-color: rgba(201, 168, 71, 0.6);
+  color: var(--yellow);
+  background: rgba(201, 168, 71, 0.07);
+}
+.bm-add-btn--on {
+  border-color: rgba(154, 56, 85, 0.45);
+  color: rgba(154, 56, 85, 0.75);
+}
+.bm-add-btn--on:hover {
+  border-color: rgba(154, 56, 85, 0.7);
+  color: var(--red);
+  background: rgba(154, 56, 85, 0.08);
+}
+
+.bm-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0 48px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 120, 112, 0.18) transparent;
+}
+.bm-scroll::-webkit-scrollbar { width: 2px; }
+.bm-scroll::-webkit-scrollbar-track { background: transparent; }
+.bm-scroll::-webkit-scrollbar-thumb {
+  background: rgba(45, 120, 112, 0.22);
+  border-radius: 2px;
+}
+
+.bm-item {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid rgba(45, 120, 112, 0.09);
+  transition: background 0.12s ease;
+}
+.bm-item:hover { background: rgba(45, 120, 112, 0.05); }
+
+.bm-item-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 12px 14px 12px 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+}
+
+.bm-chapter {
+  font-size: 0.8rem;
+  color: rgba(240, 226, 204, 0.6);
+  font-family: var(--font-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  transition: color 0.12s ease;
+}
+.bm-item:hover .bm-chapter { color: rgba(240, 226, 204, 0.9); }
+
+.bm-pct {
+  font-size: 0.58rem;
+  color: rgba(201, 168, 71, 0.45);
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+}
+
+.bm-remove {
+  flex-shrink: 0;
+  width: 36px;
+  background: transparent;
+  border: none;
+  border-left: 1px solid rgba(45, 120, 112, 0.09);
+  color: rgba(240, 226, 204, 0.18);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: color 0.12s ease, background 0.12s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.bm-remove:hover {
+  color: var(--red);
+  background: rgba(154, 56, 85, 0.08);
+}
+
+.bm-empty {
+  padding: 40px 22px;
+  font-size: 0.65rem;
+  color: rgba(201, 168, 71, 0.3);
+  letter-spacing: 0.1em;
+  font-family: var(--font-mono);
+}
+
+/* ── Bookmark button in nav ──────────────────────── */
+.nav-bookmark {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(45, 120, 112, 0.06);
+  border: 1px solid rgba(45, 120, 112, 0.28);
+  border-radius: 3px;
+  color: rgba(201, 168, 71, 0.45);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease,
+              background 0.15s ease, transform 0.12s ease;
+  user-select: none;
+  font-family: var(--font-mono);
+}
+.nav-bookmark:hover {
+  border-color: rgba(201, 168, 71, 0.65);
+  color: var(--yellow);
+  background: rgba(201, 168, 71, 0.09);
+  transform: scale(1.06);
+}
+.nav-bookmark.active {
+  color: var(--yellow);
+  border-color: rgba(201, 168, 71, 0.55);
+  background: rgba(201, 168, 71, 0.08);
+  text-shadow: 0 0 10px rgba(201, 168, 71, 0.45);
 }
 
 /* ─────────────────────────────────────────────────────
@@ -290,11 +486,11 @@
 .flip-enter-left  { animation: feL 0.3s  ease-out forwards; }
 
 @keyframes fxL {
-  from { transform: translate3d(0,0,0) scale(1);     opacity: 1; }
+  from { transform: translate3d(0,0,0) scale(1);    opacity: 1; }
   to   { transform: translate3d(-6%,0,0) scale(.97); opacity: 0; }
 }
 @keyframes fxR {
-  from { transform: translate3d(0,0,0) scale(1);    opacity: 1; }
+  from { transform: translate3d(0,0,0) scale(1);   opacity: 1; }
   to   { transform: translate3d(6%,0,0) scale(.97); opacity: 0; }
 }
 @keyframes feR {
@@ -313,64 +509,202 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 0 18px;
-  height: 24px;
-  background: rgba(1, 3, 1, 0.6);
+  gap: 16px;
+  padding: 0 20px;
+  height: 28px;
+  background: rgba(9, 22, 20, 0.78);
   backdrop-filter: blur(16px) saturate(160%);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border-top: 1px solid rgba(209, 96, 31, 0.07);
+  border-top: 1px solid rgba(45, 120, 112, 0.12);
 }
 
 .foot-track {
   flex: 1;
-  height: 1px;
-  background: rgba(209, 96, 31, 0.1);
-  border-radius: 1px;
+  height: 2px;
+  background: rgba(45, 120, 112, 0.15);
+  border-radius: 2px;
   overflow: hidden;
 }
 
 .foot-fill {
   width: 100%;
   height: 100%;
-  background: var(--green);
+  background: linear-gradient(90deg, var(--teal), var(--yellow));
   transform-origin: left center;
   transform: scaleX(0);
   transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 6px rgba(209, 96, 31, 0.5);
+  box-shadow: 0 0 8px rgba(201, 168, 71, 0.45);
 }
 
 .foot-pct {
-  font-size: 0.5rem;
-  color: rgba(209, 96, 31, 0.25);
+  font-size: 0.58rem;
+  color: rgba(201, 168, 71, 0.45);
   letter-spacing: 0.1em;
   flex-shrink: 0;
-  min-width: 2.4ch;
+  min-width: 2.6ch;
   text-align: right;
   font-family: var(--font-mono);
+}
+
+/* ─────────────────────────────────────────────────────
+   Light mode overrides
+───────────────────────────────────────────────────── */
+.epub-reader[data-theme="light"] .epub-nav {
+  background: rgba(245, 237, 224, 0.97);
+  border-bottom-color: rgba(107, 61, 30, 0.18);
+}
+.epub-reader[data-theme="light"] .nav-arrow {
+  background: rgba(107, 61, 30, 0.05);
+  border-color: rgba(107, 61, 30, 0.28);
+  color: rgba(107, 61, 30, 0.72);
+}
+.epub-reader[data-theme="light"] .nav-arrow:hover {
+  border-color: rgba(107, 61, 30, 0.65);
+  color: rgba(107, 61, 30, 1);
+  background: rgba(107, 61, 30, 0.08);
+  box-shadow: 0 0 10px rgba(107, 61, 30, 0.12);
+}
+.epub-reader[data-theme="light"] .nav-label,
+.epub-reader[data-theme="light"] .nav-dots {
+  color: rgba(107, 61, 30, 0.6);
+}
+.epub-reader[data-theme="light"] .nav-caret {
+  color: rgba(107, 61, 30, 0.3);
+}
+.epub-reader[data-theme="light"] .nav-mode {
+  background: rgba(107, 61, 30, 0.05);
+  border-color: rgba(107, 61, 30, 0.28);
+  color: rgba(107, 61, 30, 0.72);
+}
+.epub-reader[data-theme="light"] .nav-mode:hover {
+  border-color: rgba(107, 61, 30, 0.6);
+  color: rgba(107, 61, 30, 1);
+  background: rgba(107, 61, 30, 0.08);
+}
+.epub-reader[data-theme="light"] .toc-panel {
+  background: rgba(245, 237, 224, 0.99);
+  border-right-color: rgba(107, 61, 30, 0.18);
+}
+.epub-reader[data-theme="light"] .toc-head {
+  color: rgba(107, 61, 30, 0.55);
+  border-bottom-color: rgba(107, 61, 30, 0.14);
+}
+.epub-reader[data-theme="light"] .toc-btn {
+  color: rgba(42, 26, 14, 0.5);
+}
+.epub-reader[data-theme="light"] .toc-btn:hover {
+  color: rgba(42, 26, 14, 0.9);
+  background: rgba(107, 61, 30, 0.06);
+}
+.epub-reader[data-theme="light"] .toc-btn.active {
+  color: rgba(107, 61, 30, 1);
+  border-left-color: rgba(107, 61, 30, 0.85);
+  background: rgba(107, 61, 30, 0.08);
+  text-shadow: none;
+}
+.epub-reader[data-theme="light"] .epub-foot {
+  background: rgba(245, 237, 224, 0.9);
+  border-top-color: rgba(107, 61, 30, 0.12);
+}
+.epub-reader[data-theme="light"] .foot-track {
+  background: rgba(107, 61, 30, 0.12);
+}
+.epub-reader[data-theme="light"] .foot-fill {
+  background: linear-gradient(90deg, rgba(107, 61, 30, 0.7), rgba(107, 61, 30, 1));
+  box-shadow: none;
+}
+.epub-reader[data-theme="light"] .foot-pct {
+  color: rgba(107, 61, 30, 0.5);
+}
+.epub-reader[data-theme="light"] .bm-panel {
+  background: rgba(245, 237, 224, 0.99);
+  border-left-color: rgba(107, 61, 30, 0.18);
+}
+.epub-reader[data-theme="light"] .bm-head {
+  border-bottom-color: rgba(107, 61, 30, 0.14);
+}
+.epub-reader[data-theme="light"] .bm-head-title {
+  color: rgba(107, 61, 30, 0.55);
+}
+.epub-reader[data-theme="light"] .bm-add-btn {
+  border-color: rgba(107, 61, 30, 0.3);
+  color: rgba(107, 61, 30, 0.6);
+}
+.epub-reader[data-theme="light"] .bm-add-btn:hover {
+  border-color: rgba(107, 61, 30, 0.65);
+  color: rgba(107, 61, 30, 1);
+  background: rgba(107, 61, 30, 0.06);
+}
+.epub-reader[data-theme="light"] .bm-chapter {
+  color: rgba(42, 26, 14, 0.55);
+}
+.epub-reader[data-theme="light"] .bm-item:hover .bm-chapter {
+  color: rgba(42, 26, 14, 0.9);
+}
+.epub-reader[data-theme="light"] .bm-item:hover {
+  background: rgba(107, 61, 30, 0.05);
+}
+.epub-reader[data-theme="light"] .bm-pct {
+  color: rgba(107, 61, 30, 0.4);
+}
+.epub-reader[data-theme="light"] .bm-item { border-bottom-color: rgba(107, 61, 30, 0.08); }
+.epub-reader[data-theme="light"] .bm-remove {
+  border-left-color: rgba(107, 61, 30, 0.08);
+  color: rgba(42, 26, 14, 0.18);
+}
+.epub-reader[data-theme="light"] .bm-empty {
+  color: rgba(107, 61, 30, 0.3);
+}
+.epub-reader[data-theme="light"] .nav-bookmark {
+  background: rgba(107, 61, 30, 0.05);
+  border-color: rgba(107, 61, 30, 0.28);
+  color: rgba(107, 61, 30, 0.45);
+}
+.epub-reader[data-theme="light"] .nav-bookmark:hover {
+  border-color: rgba(107, 61, 30, 0.65);
+  color: rgba(107, 61, 30, 1);
+  background: rgba(107, 61, 30, 0.08);
+}
+.epub-reader[data-theme="light"] .nav-bookmark.active {
+  color: rgba(107, 61, 30, 1);
+  border-color: rgba(107, 61, 30, 0.55);
+  background: rgba(107, 61, 30, 0.08);
+  text-shadow: none;
+}
+.epub-reader[data-theme="light"] .epub-loading {
+  background: rgba(245, 237, 224, 0.8);
+  color: rgba(107, 61, 30, 0.65);
+}
+.epub-reader[data-theme="light"] .epub-spinner {
+  border-color: rgba(107, 61, 30, 0.15);
+  border-top-color: rgba(107, 61, 30, 0.8);
+  box-shadow: none;
 }
 
 /* ─────────────────────────────────────────────────────
    Responsive
 ───────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .toc-panel { width: 260px; }
-  .epub-nav { padding: 0 10px; gap: 6px; height: 44px; }
-  .nav-arrow { width: 32px; height: 32px; font-size: 1.05rem; }
-  .nav-mode  { padding: 5px 11px; font-size: 0.58rem; }
-  .page-tap  { width: 52px; }
-  .epub-foot { padding: 0 14px; height: 22px; }
-  .foot-pct  { font-size: 0.5rem; }
+  .toc-panel  { width: 270px; }
+  .bm-panel   { width: 260px; }
+  .epub-nav   { padding: 0 12px; gap: 8px; height: 50px; }
+  .nav-arrow  { width: 40px; height: 40px; font-size: 1.25rem; }
+  .nav-bookmark { width: 36px; height: 36px; }
+  .nav-mode   { padding: 7px 14px; font-size: 0.65rem; }
+  .page-tap   { width: 56px; }
+  .epub-foot  { padding: 0 16px; height: 26px; }
 }
 
 @media (max-width: 480px) {
-  .toc-panel   { width: 100%; }
+  .toc-panel    { width: 100%; }
+  .bm-panel     { width: 100%; }
   .toc-backdrop { display: none; }
-  .epub-nav  { padding: 0 8px; gap: 4px; height: 42px; }
-  .nav-arrow { width: 30px; height: 30px; font-size: 1rem; }
-  .nav-mode  { padding: 5px 9px; letter-spacing: 0; }
-  .page-tap  { width: 40px; }
-  .epub-foot { padding: 0 10px; }
+  .epub-nav     { padding: 0 10px; gap: 6px; height: 48px; }
+  .nav-arrow    { width: 38px; height: 38px; font-size: 1.15rem; }
+  .nav-bookmark { width: 34px; height: 34px; font-size: 0.8rem; }
+  .nav-mode     { padding: 6px 11px; letter-spacing: 0; }
+  .page-tap     { width: 44px; }
+  .epub-foot    { padding: 0 12px; }
 }
 
 /* ─────────────────────────────────────────────────────
@@ -384,22 +718,22 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 18px;
   pointer-events: none;
-  color: rgba(209, 96, 31, 0.55);
-  font-size: 0.62rem;
-  letter-spacing: 0.18em;
+  color: rgba(201, 168, 71, 0.6);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  font-family: var(--font-mono);
+  font-family: var(--font-sc);
 }
 .epub-spinner {
-  width: 22px;
-  height: 22px;
-  border: 1.5px solid rgba(209, 96, 31, 0.1);
-  border-top-color: var(--green);
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid rgba(45, 120, 112, 0.18);
+  border-top-color: var(--yellow);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  box-shadow: 0 0 8px rgba(209, 96, 31, 0.2);
+  animation: spin 0.9s linear infinite;
+  box-shadow: 0 0 10px rgba(201, 168, 71, 0.22);
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -411,10 +745,10 @@
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   color: var(--red);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   padding: 48px;
   text-align: center;
-  max-width: 420px;
+  max-width: 440px;
   line-height: 1.8;
   font-family: var(--font-mono);
 }

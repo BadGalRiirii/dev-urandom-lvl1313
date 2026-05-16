@@ -13,6 +13,11 @@ export default function PostCard({ post, index }) {
       transition={{ delay: index * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
       <Link to={`/post/${post.id}`} className="post-card">
+        {post.cover_image && (
+          <div className="post-card-image">
+            <img src={post.cover_image} alt="" />
+          </div>
+        )}
         <div className="post-card-top">
           <TypeBadge type={post.category || 'post'} />
           {post.rating && (

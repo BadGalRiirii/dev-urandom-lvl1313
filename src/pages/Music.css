@@ -49,3 +49,13 @@
   font-size: 0.8rem;
   letter-spacing: 0.06em;
 }
+
+@media (max-width: 768px) {
+  .music-page { padding: 80px 20px 100px; }
+  .music-header { margin-bottom: 6px; }
+  .music-title { font-size: clamp(2rem, 8vw, 3rem); }
+}
+
+@media (max-width: 480px) {
+  .music-page { padding: 72px 12px 90px; }
+}

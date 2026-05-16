@@ -323,7 +323,31 @@ a {
   margin: 24px 0;
 }
 .divider-yellow {
-  background: linear-gradient(90deg, transparent, var(--satsuma), transparent);
+  background: linear-gradient(90deg, transparent, var(--yellow), transparent);
+}
+
+/* ─── ART NOUVEAU ORNAMENTAL DIVIDER ─────────────── */
+.divider-ornament {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 32px 0;
+  color: rgba(201, 168, 71, 0.35);
+}
+.divider-ornament::before,
+.divider-ornament::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 168, 71, 0.28), transparent);
+}
+.divider-ornament-mark {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.18em;
+  color: rgba(201, 168, 71, 0.4);
+  font-style: italic;
+  flex-shrink: 0;
 }
 
 /* ─── INPUT ──────────────────────────────────────── */
@@ -352,4 +376,12 @@ input::placeholder, textarea::placeholder {
 /* ─── RESPONSIVE ─────────────────────────────────── */
 @media (max-width: 768px) {
   body { font-size: 16px; }
+  .btn { padding: 11px 26px; font-size: 0.72rem; }
+}
+
+@media (max-width: 480px) {
+  body { font-size: 15px; }
+  .btn { padding: 10px 20px; font-size: 0.68rem; letter-spacing: 0.12em; }
+  /* Prevent iOS auto-zoom on input focus */
+  input, textarea, select { font-size: 16px !important; }
 }

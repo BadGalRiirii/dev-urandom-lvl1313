@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
 import ChapterCard from '../ui/ChapterCard'
+import artnoImg from '../../assets/ARTNO.jpg'
 import './HeroText.css'
 
 const container = {
@@ -36,14 +36,25 @@ export default function HeroText() {
         a personal archive of obsessions — books, films, sounds, &amp; half-finished thoughts
       </motion.p>
 
-      <motion.div className="hero-ctas" variants={item}>
-        <Link to="/library" className="btn btn-yellow">
-          ↗ Enter the Archive
-        </Link>
-        <Link to="/music" className="btn btn-red">
-          ♪ Play Something
-        </Link>
+      <motion.div variants={item} className="fruit-card-wrap">
+        <button className="fruit-card" disabled title="Coming soon — hand tracking game">
+          <img src={artnoImg} alt="" className="fruit-card-img" draggable={false} />
+
+          {/* inner gold rule frame */}
+          <div className="fruit-card-frame" />
+
+          {/* bottom label panel */}
+          <div className="fruit-card-label">
+            <span className="fruit-card-ornament">✦ ✦ ✦</span>
+            <span className="fruit-card-title">Game Mode</span>
+            <span className="fruit-card-sub">coming soon</span>
+          </div>
+
+          {/* hover glow corona */}
+          <div className="fruit-card-corona" />
+        </button>
       </motion.div>
+
     </motion.div>
   )
 }

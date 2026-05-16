@@ -4,7 +4,7 @@ import PostCard from '../components/blog/PostCard'
 import { getPosts } from '../lib/api'
 import './Journal.css'
 
-const CATEGORIES = ['all', 'book', 'film', 'series']
+const CATEGORIES = ['all', 'book', 'film', 'series', 'personal']
 
 export default function Journal() {
   const [posts, setPosts] = useState([])

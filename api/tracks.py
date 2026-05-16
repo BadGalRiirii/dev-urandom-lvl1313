@@ -6,6 +6,9 @@ from api.auth import verify_token
 
 router = APIRouter()
 
+MAX_TRACK_SIZE     = 150 * 1024 * 1024   # 150 MB
+ALLOWED_TRACK_EXTS = {"mp3", "wav", "ogg", "flac", "aac", "m4a"}
+
 
 def get_supabase():
     url = os.getenv("SUPABASE_URL")
@@ -18,10 +21,41 @@ async def list_tracks():
     sb = get_supabase()
     res = sb.table("tracks").select("*").order("created_at", desc=True).execute()
     tracks = res.data
-    # Attach public URLs
+    if not tracks:
+        return tracks
+
+    # One batch call instead of N sequential calls — much faster
+    paths = [t["file_path"] for t in tracks]
+    url_map: dict[str, str] = {}
+    try:
+        result = sb.storage.from_("music").create_signed_urls(paths, 86400)
+        # Normalize: supabase-py may return a list or a response object
+        if isinstance(result, list):
+            items = result
+        elif hasattr(result, "data") and result.data:
+            items = result.data
+        elif isinstance(result, dict) and "data" in result:
+            items = result["data"]
+        else:
+            items = []
+
+        for r in items:
+            if isinstance(r, dict):
+                path = r.get("path") or r.get("file_path", "")
+                url  = r.get("signedURL") or r.get("signedUrl", "")
+                if path:
+                    url_map[path] = url
+    except Exception:
+        # Fallback: generate signed URLs one at a time (slower but always works)
+        for t in tracks:
+            try:
+                signed = sb.storage.from_("music").create_signed_url(t["file_path"], 86400)
+                url_map[t["file_path"]] = signed.get("signedURL") or signed.get("signedUrl", "")
+            except Exception:
+                url_map[t["file_path"]] = ""
+
     for t in tracks:
-        signed = sb.storage.from_("music").create_signed_url(t["file_path"], 86400)
-        t["url"] = signed.get("signedURL") or signed.get("signedUrl", "")
+        t["url"] = url_map.get(t["file_path"], "")
     return tracks
 
 
@@ -33,15 +67,21 @@ async def upload_track(
     cd_image: int = Form(1),
     _: str = Depends(verify_token),
 ):
-    sb = get_supabase()
+    ext = (file.filename or "").rsplit(".", 1)[-1].lower()
+    if ext not in ALLOWED_TRACK_EXTS:
+        raise HTTPException(400, "Only MP3, WAV, OGG, FLAC, AAC, and M4A files are allowed")
+
     content = await file.read()
-    ext = file.filename.rsplit(".", 1)[-1].lower()
+    if len(content) > MAX_TRACK_SIZE:
+        raise HTTPException(400, "File too large (max 150 MB)")
+
+    sb = get_supabase()
     file_path = f"{uuid.uuid4()}.{ext}"
     try:
         sb.storage.from_("music").upload(file_path, content, {"content-type": file.content_type})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Storage upload failed: {str(e)}")
-    # cd_image is encoded in cover_color as "cd:N" (avoids schema migration)
+
     record = {"title": title, "artist": artist, "file_path": file_path, "cover_color": f"cd:{cd_image}"}
     try:
         res = sb.table("tracks").insert(record).execute()

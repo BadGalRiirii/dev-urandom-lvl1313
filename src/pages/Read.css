@@ -3,6 +3,7 @@
   inset: 0;
   display: flex;
   flex-direction: column;
+  transition: background 0.35s ease, color 0.35s ease;
 }
 
 .reader-content {
@@ -14,4 +15,8 @@
 
 .read-loading {
   padding: 80px;
+}
+
+@media (max-width: 480px) {
+  .read-loading { padding: 40px 16px; }
 }

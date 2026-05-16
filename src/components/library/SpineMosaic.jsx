@@ -33,43 +33,49 @@ export default function SpineMosaic({ books, mosaicImage, title, type }) {
         <span className="mosaic-meta-label serif">{title}</span>
       </div>
 
-      <div
-        className="mosaic-grid"
-        style={{ gridTemplateColumns: `repeat(${maxPerRow}, ${SPINE_W}px)` }}
-        onMouseLeave={() => setHoveredIdx(null)}
-      >
-        {books.map((book, i) => {
-          const col = i % maxPerRow
-          const row = Math.floor(i / maxPerRow)
-          const isHovered = hoveredIdx === i
-          const isSibling = hoveredIdx !== null && !isHovered
+      <div className="mosaic-grid-scroll">
+        <div
+          className="mosaic-grid"
+          style={{ gridTemplateColumns: `repeat(${maxPerRow}, ${SPINE_W}px)` }}
+          onMouseLeave={() => setHoveredIdx(null)}
+        >
+          {books.map((book, i) => {
+            const col = i % maxPerRow
+            const row = Math.floor(i / maxPerRow)
+            const isHovered = hoveredIdx === i
+            const isSibling = hoveredIdx !== null && !isHovered
 
-          return (
-            <motion.div
-              key={book.id}
-              className={`mosaic-spine${isHovered ? ' hovered' : ''}`}
-              style={{
-                width: SPINE_W,
-                height: SPINE_H,
-                backgroundImage: `url(${mosaicImage})`,
-                backgroundSize: `${totalW}px ${totalH}px`,
-                backgroundPosition: `${-col * SPINE_W}px ${-row * SPINE_H}px`,
-                backgroundRepeat: 'no-repeat',
-              }}
-              animate={{
-                y: isHovered ? -20 : 0,
-                filter: isHovered
-                  ? 'brightness(1.28) saturate(1.18) contrast(1.06)'
-                  : isSibling
-                  ? 'brightness(0.42) saturate(0.55)'
-                  : 'brightness(0.82) saturate(0.88)',
-              }}
-              transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-              onMouseEnter={() => setHoveredIdx(i)}
-              onClick={() => navigate(`/read/${book.id}`)}
-            />
-          )
-        })}
+            return (
+              <motion.div
+                key={book.id}
+                className={`mosaic-spine${isHovered ? ' hovered' : ''}`}
+                style={{
+                  width: SPINE_W,
+                  height: SPINE_H,
+                  backgroundImage: `url(${mosaicImage})`,
+                  backgroundSize: `${totalW}px ${totalH}px`,
+                  backgroundPosition: `${-col * SPINE_W}px ${-row * SPINE_H}px`,
+                  backgroundRepeat: 'no-repeat',
+                }}
+                animate={{
+                  y: isHovered ? -20 : 0,
+                  filter: isHovered
+                    ? 'brightness(1.28) saturate(1.18) contrast(1.06)'
+                    : isSibling
+                    ? 'brightness(0.42) saturate(0.55)'
+                    : 'brightness(0.82) saturate(0.88)',
+                }}
+                transition={{ type: 'spring', stiffness: 400, damping: 26 }}
+                onMouseEnter={() => setHoveredIdx(i)}
+                onTouchStart={() => setHoveredIdx(i)}
+                onClick={() => {
+                  if (hoveredIdx === i) navigate(`/read/${book.id}`)
+                  else setHoveredIdx(i)
+                }}
+              />
+            )
+          })}
+        </div>
       </div>
 
       {/* Title reveal below the grid */}

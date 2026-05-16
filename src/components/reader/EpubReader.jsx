@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import './EpubReader.css'
 
+const storageKey   = (id) => `riri_reader_${id}_cfi`
+const bookmarksKey = (id) => `riri_reader_${id}_bm`
+
 /* ─────────────────────────────────────────────────────
-   Theme builder — only enforce colors, let epub CSS handle layout
+   Theme builder
 ───────────────────────────────────────────────────── */
 const buildTheme = (themeStyle, fontSize) => ({
   body: {
@@ -56,7 +59,7 @@ function TocRow({ item, current, onPick, depth }) {
 /* ─────────────────────────────────────────────────────
    Main component
 ───────────────────────────────────────────────────── */
-export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
+export default function EpubReader({ url, bookId, fontSize, themeStyle, themeMode = 'dark', onProgress }) {
   const containerRef = useRef(null)
   const bookRef      = useRef(null)
   const rendRef      = useRef(null)
@@ -75,13 +78,62 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
   const [bookTitle, setBookTitle] = useState('')
   const [toc,       setToc]       = useState([])
   const [tocOpen,   setTocOpen]   = useState(false)
+  const [jumping,   setJumping]   = useState(false)
+  const [bookmarks, setBookmarks] = useState([])
+  const [bmOpen,    setBmOpen]    = useState(false)
 
   modeRef.current = mode
+
+  /* ── Load bookmarks from localStorage ────────────── */
+  useEffect(() => {
+    if (!bookId) return
+    try {
+      const saved = localStorage.getItem(bookmarksKey(bookId))
+      setBookmarks(saved ? JSON.parse(saved) : [])
+    } catch {
+      setBookmarks([])
+    }
+  }, [bookId])
+
+  const persistBookmarks = useCallback((bms) => {
+    if (bookId) {
+      try { localStorage.setItem(bookmarksKey(bookId), JSON.stringify(bms)) } catch {}
+    }
+  }, [bookId])
+
+  const addBookmark = useCallback(() => {
+    if (!cfiRef.current) return
+    const bm = {
+      id:        Date.now(),
+      cfi:       cfiRef.current,
+      chapter:   chapter || bookTitle || '—',
+      pct:       progress,
+      createdAt: new Date().toISOString(),
+    }
+    setBookmarks(prev => {
+      if (prev.some(b => b.cfi === bm.cfi)) return prev
+      const next = [bm, ...prev]
+      persistBookmarks(next)
+      return next
+    })
+  }, [chapter, bookTitle, progress, persistBookmarks])
+
+  const removeBookmark = useCallback((bmId) => {
+    setBookmarks(prev => {
+      const next = prev.filter(b => b.id !== bmId)
+      persistBookmarks(next)
+      return next
+    })
+  }, [persistBookmarks])
 
   /* ── Wire relocated event ─────────────────────────── */
   const wireEvents = useCallback((rend) => {
     rend.on('relocated', (loc) => {
-      cfiRef.current = loc.start?.cfi ?? null
+      const cfi = loc.start?.cfi ?? null
+      cfiRef.current = cfi
+      if (bookId && cfi) {
+        try { localStorage.setItem(storageKey(bookId), cfi) } catch {}
+      }
       setAtStart(loc.atStart ?? false)
       setAtEnd(loc.atEnd   ?? false)
       const pct = loc.start?.percentage ?? 0
@@ -91,12 +143,12 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
         setChapter(findLabel(bookRef.current.navigation?.toc, loc.start.href))
       }
     })
-  }, [onProgress])
+  }, [onProgress, bookId])
 
   /* ── Keyboard shortcuts ───────────────────────────── */
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') { setTocOpen(false); return }
+      if (e.key === 'Escape') { setTocOpen(false); setBmOpen(false); return }
       if (modeRef.current === 'page') {
         if (e.key === 'ArrowRight' || e.key === 'PageDown') flipPage('next')
         if (e.key === 'ArrowLeft'  || e.key === 'PageUp')   flipPage('prev')
@@ -123,24 +175,35 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
     }, 220)
   }, [])
 
-  /* ── Chapter jump ─────────────────────────────────── */
+  /* ── Chapter jump (smooth fade) ───────────────────── */
   const jumpTo = useCallback(async (href) => {
     if (!href || !rendRef.current || !bookRef.current) return
     setTocOpen(false)
+    setJumping(true)
+    await new Promise(r => setTimeout(r, 200))
     const rend = rendRef.current
     const book = bookRef.current
-    // Strip #fragment — spine.get needs the bare path
     const path = href.split('#')[0]
     const item = book.spine.get(path)
     try {
-      // Spine index is the most reliable navigation target in epubjs
       await rend.display(item ? item.index : href)
     } catch {
       try { await rend.display(href) } catch {}
     }
+    setJumping(false)
   }, [])
 
-  /* ── Mode toggle ──────────────────────────────────── */
+  /* ── Bookmark jump ────────────────────────────────── */
+  const jumpToBookmark = useCallback(async (cfi) => {
+    if (!cfi || !rendRef.current) return
+    setBmOpen(false)
+    setJumping(true)
+    await new Promise(r => setTimeout(r, 200))
+    try { await rendRef.current.display(cfi) } catch {}
+    setJumping(false)
+  }, [])
+
+  /* ── Mode toggle (with fade) ──────────────────────── */
   const toggleMode = useCallback(async () => {
     const book = bookRef.current
     const el   = containerRef.current
@@ -148,6 +211,9 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
 
     const saved   = cfiRef.current
     const newMode = modeRef.current === 'scroll' ? 'page' : 'scroll'
+
+    setJumping(true)
+    await new Promise(r => setTimeout(r, 200))
 
     rendRef.current?.destroy()
     rendRef.current = null
@@ -162,6 +228,7 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
     await rend.display(saved ?? undefined)
     wireEvents(rend)
     setMode(newMode)
+    setJumping(false)
   }, [themeStyle, fontSize, wireEvents])
 
   /* ── Load book ────────────────────────────────────── */
@@ -178,9 +245,13 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
       setBookTitle('')
       setToc([])
       setTocOpen(false)
+      setBmOpen(false)
+      setJumping(false)
       cfiRef.current  = null
       modeRef.current = 'scroll'
       setMode('scroll')
+
+      const savedCfi = bookId ? (localStorage.getItem(storageKey(bookId)) ?? undefined) : undefined
 
       try {
         const ePub = (await import('epubjs')).default
@@ -210,18 +281,16 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
         timer = setTimeout(() => { if (!dead) setLoading(false) }, 8000)
         rend.once('rendered', () => { clearTimeout(timer); if (!dead) setLoading(false) })
 
-        await rend.display()
+        await rend.display(savedCfi)
         wireEvents(rend)
         book.locations.generate(1024)
 
-        // Load metadata (book title)
         book.loaded.metadata.then(() => {
           if (dead) return
           const meta = book.packaging?.metadata || book.package?.metadata
           if (meta?.title) setBookTitle(meta.title)
         }).catch(() => {})
 
-        // Load TOC
         book.loaded.navigation.then(() => {
           if (!dead) setToc(book.navigation?.toc || [])
         }).catch(() => {})
@@ -239,14 +308,13 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
     }
   }, [url]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { rendRef.current?.themes.fontSize(`${fontSize}px`) }, [fontSize])
-
+  /* ── Re-apply theme on change ─────────────────────── */
   useEffect(() => {
     if (!rendRef.current) return
-    rendRef.current.themes.override('color',      themeStyle.text)
-    rendRef.current.themes.override('background', themeStyle.bg)
-  }, [themeStyle])
+    rendRef.current.themes.default(buildTheme(themeStyle, fontSize))
+  }, [themeStyle, fontSize])
 
+  /* ── Resize observer ──────────────────────────────── */
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -256,21 +324,35 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
   }, [])
 
   if (error) return (
-    <div className="epub-reader">
+    <div className="epub-reader" data-theme={themeMode}>
       <div className="epub-error mono">{error}</div>
     </div>
   )
 
-  const isPaged   = mode === 'page'
-  const goBack    = isPaged ? () => flipPage('prev') : () => rendRef.current?.prev()
-  const goFwd     = isPaged ? () => flipPage('next') : () => rendRef.current?.next()
-  const navLabel  = chapter || bookTitle || ''
+  const isPaged      = mode === 'page'
+  const goBack       = isPaged ? () => flipPage('prev') : () => rendRef.current?.prev()
+  const goFwd        = isPaged ? () => flipPage('next') : () => rendRef.current?.next()
+  const navLabel     = chapter || bookTitle || ''
+  const isBookmarked = bookmarks.some(b => b.cfi === cfiRef.current)
+
+  const toggleBookmark = () => {
+    if (isBookmarked) {
+      const bm = bookmarks.find(b => b.cfi === cfiRef.current)
+      if (bm) removeBookmark(bm.id)
+    } else {
+      addBookmark()
+    }
+  }
 
   return (
-    <div className="epub-reader">
+    <div className="epub-reader" data-theme={themeMode}>
 
-      {/* ── TOC drawer ──────────────────────────────── */}
-      {tocOpen && <div className="toc-backdrop" onClick={() => setTocOpen(false)} />}
+      {/* ── Backdrop (closes both panels) ───────────── */}
+      {(tocOpen || bmOpen) && (
+        <div className="toc-backdrop" onClick={() => { setTocOpen(false); setBmOpen(false) }} />
+      )}
+
+      {/* ── TOC drawer (left) ───────────────────────── */}
       <aside className={`toc-panel${tocOpen ? ' open' : ''}`}>
         <div className="toc-head mono">Contents</div>
         <div className="toc-scroll">
@@ -279,6 +361,38 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
                 <TocRow key={i} item={item} current={chapter} onPick={jumpTo} depth={0} />
               ))
             : <div className="toc-empty mono">No chapters found</div>
+          }
+        </div>
+      </aside>
+
+      {/* ── Bookmark drawer (right) ─────────────────── */}
+      <aside className={`bm-panel${bmOpen ? ' open' : ''}`}>
+        <div className="bm-head">
+          <span className="bm-head-title mono">Bookmarks</span>
+          <button
+            className={`bm-add-btn mono${isBookmarked ? ' bm-add-btn--on' : ''}`}
+            onClick={toggleBookmark}
+            title={isBookmarked ? 'Remove bookmark' : 'Bookmark this page'}
+          >
+            {isBookmarked ? '✕ remove' : '+ mark'}
+          </button>
+        </div>
+        <div className="bm-scroll">
+          {bookmarks.length
+            ? bookmarks.map(bm => (
+                <div key={bm.id} className="bm-item">
+                  <button className="bm-item-main" onClick={() => jumpToBookmark(bm.cfi)}>
+                    <span className="bm-chapter">{bm.chapter}</span>
+                    <span className="bm-pct mono">{Math.round(bm.pct * 100)}%</span>
+                  </button>
+                  <button
+                    className="bm-remove"
+                    onClick={() => removeBookmark(bm.id)}
+                    aria-label="Remove bookmark"
+                  >×</button>
+                </div>
+              ))
+            : <div className="bm-empty mono">No bookmarks yet</div>
           }
         </div>
       </aside>
@@ -301,7 +415,7 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
 
         <button
           className="nav-chapter"
-          onClick={() => setTocOpen(o => !o)}
+          onClick={() => { setTocOpen(o => !o); setBmOpen(false) }}
           aria-label="Table of contents"
           title="Open chapter list"
         >
@@ -317,6 +431,15 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
         </button>
 
         <button
+          className={`nav-bookmark mono${isBookmarked ? ' active' : ''}`}
+          onClick={() => { setBmOpen(o => !o); setTocOpen(false) }}
+          aria-label="Bookmarks"
+          title={bmOpen ? 'Close bookmarks' : 'Open bookmarks'}
+        >
+          {isBookmarked ? '◆' : '◇'}
+        </button>
+
+        <button
           className={`nav-arrow${atEnd ? ' dim' : ''}`}
           onClick={goFwd}
           aria-label="Next"
@@ -325,7 +448,6 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
 
       {/* ── Reading area ────────────────────────────── */}
       <div className="epub-stage">
-        {/* Tap zones for page mode — invisible click areas on each side */}
         {isPaged && (
           <>
             <button
@@ -340,7 +462,10 @@ export default function EpubReader({ url, fontSize, themeStyle, onProgress }) {
             />
           </>
         )}
-        <div className={`epub-body${flipCls ? ` ${flipCls}` : ''}`} ref={containerRef} />
+        <div
+          className={`epub-body${flipCls ? ` ${flipCls}` : ''}${jumping ? ' epub-jumping' : ''}`}
+          ref={containerRef}
+        />
       </div>
 
       {/* ── Progress bar ────────────────────────────── */}

@@ -8,8 +8,8 @@ import { supabase } from '../lib/supabase'
 import './Read.css'
 
 const READER_MODES = {
-  dark:  { bg: '#010200', text: '#90e090' },
-  light: { bg: '#f5f5f0', text: '#1a2010' },
+  dark:  { bg: '#0e1f1c', text: '#f0e2cc', accent: '#c9a847' },
+  light: { bg: '#f5ede0', text: '#2a1a0e', accent: '#6b3d1e' },
 }
 
 export default function Read() {
@@ -61,8 +61,10 @@ export default function Read() {
         {book?.file_type === 'epub' ? (
           <EpubReader
             url={fileUrl}
+            bookId={id}
             fontSize={fontSize}
             themeStyle={themeStyle}
+            themeMode={mode}
             onProgress={setProgress}
           />
         ) : (

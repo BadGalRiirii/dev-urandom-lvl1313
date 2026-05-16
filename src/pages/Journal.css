@@ -37,6 +37,7 @@
 .journal-filters {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .journal-grid {
@@ -61,11 +62,16 @@
 }
 
 @media (max-width: 768px) {
-  .journal-page {
-    padding: 90px 20px 40px;
-  }
+  .journal-page { padding: 88px 20px 40px; }
+  .journal-header { margin-bottom: 32px; flex-direction: column; align-items: flex-start; }
   .journal-grid, .journal-skeleton {
     columns: 1;
     grid-template-columns: 1fr;
   }
+}
+
+@media (max-width: 480px) {
+  .journal-page { padding: 80px 16px 40px; }
+  .journal-filters { gap: 6px; }
+  .journal-filters .pill { padding: 6px 14px; font-size: 0.65rem; }
 }
