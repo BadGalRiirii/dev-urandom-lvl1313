@@ -56,14 +56,36 @@
   font-size: 0.78rem;
   line-height: 2;
   letter-spacing: 0.05em;
-  font-family: var(--font-mono);
 }
-.boot-line.done {
-  color: rgba(201, 168, 71, 0.32);
+
+/* Terminal lines */
+.boot-line--term.done {
+  color: rgba(201, 168, 71, 0.30);
 }
-.boot-line.active {
+.boot-line--term.active {
   color: rgba(240, 226, 204, 0.88);
   text-shadow: 0 0 10px rgba(201, 168, 71, 0.4);
+}
+
+/* Poetic lines */
+.boot-line--poetic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.0rem;
+  letter-spacing: 0.07em;
+  line-height: 1.9;
+}
+.boot-line--poetic.done {
+  color: rgba(201, 168, 71, 0.52);
+}
+.boot-line--poetic.active {
+  color: rgba(201, 168, 71, 0.95);
+  text-shadow: 0 0 18px rgba(201, 168, 71, 0.55);
+}
+
+/* Blank separator */
+.boot-line-gap {
+  height: 16px;
 }
 
 .boot-cursor {

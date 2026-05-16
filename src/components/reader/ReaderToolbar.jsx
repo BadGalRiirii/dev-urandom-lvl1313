@@ -6,6 +6,7 @@ export default function ReaderToolbar({ mode, setMode, fontSize, setFontSize, pr
   return (
     <motion.div
       className="reader-toolbar"
+      data-mode={mode}
       initial={{ y: -40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.3, duration: 0.5 }}

@@ -6,6 +6,9 @@ from api.auth import verify_token
 
 router = APIRouter()
 
+MAX_BOOK_SIZE      = 150 * 1024 * 1024   # 150 MB
+ALLOWED_BOOK_EXTS  = {"pdf", "epub"}
+
 
 def get_supabase():
     url = os.getenv("SUPABASE_URL")
@@ -27,7 +30,6 @@ async def get_book(book_id: str):
     if not res.data:
         raise HTTPException(404, "Book not found")
     book = res.data
-    # Generate signed URL
     signed = sb.storage.from_("books").create_signed_url(book["file_path"], 86400)
     book["signed_url"] = signed.get("signedURL") or signed.get("signedUrl", "")
     return book
@@ -41,9 +43,15 @@ async def upload_book(
     cover_color: str = Form("#e6b400"),
     _: str = Depends(verify_token),
 ):
-    sb = get_supabase()
+    ext = (file.filename or "").rsplit(".", 1)[-1].lower()
+    if ext not in ALLOWED_BOOK_EXTS:
+        raise HTTPException(400, "Only PDF and EPUB files are allowed")
+
     content = await file.read()
-    ext = file.filename.rsplit(".", 1)[-1].lower()
+    if len(content) > MAX_BOOK_SIZE:
+        raise HTTPException(400, "File too large (max 150 MB)")
+
+    sb = get_supabase()
     file_path = f"{uuid.uuid4()}.{ext}"
     try:
         sb.storage.from_("books").upload(file_path, content, {"content-type": file.content_type})

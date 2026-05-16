@@ -14,6 +14,22 @@
   gap: 32px;
 }
 
+/* Cover image hero */
+.post-cover {
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(201, 168, 71, 0.18);
+}
+.post-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.92) saturate(0.95);
+}
+
 .post-back {
   font-size: 0.68rem;
   letter-spacing: 0.1em;
@@ -113,5 +129,13 @@
 }
 
 @media (max-width: 768px) {
-  .post-page { padding: 90px 20px 60px; }
+  .post-page { padding: 88px 20px 60px; }
+  .post-cover { height: 220px; }
+}
+
+@media (max-width: 480px) {
+  .post-page { padding: 80px 16px 48px; }
+  .post-cover { height: 180px; }
+  .post-title { font-size: clamp(1.8rem, 8vw, 2.8rem); }
+  .post-meta { gap: 8px; }
 }

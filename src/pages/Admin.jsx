@@ -19,6 +19,7 @@ import {
   getAllPosts, getPosts, createPost, updatePost, deletePost,
   getBooks, uploadBook, deleteBook,
   getTracks, uploadTrack, deleteTrack,
+  uploadPostImage,
 } from '../lib/api'
 import './Admin.css'
 
@@ -318,11 +319,71 @@ function MusicTab({ onPlay }) {
   )
 }
 
+// ── Post Image Uploader ───────────────────────────────────────────────────────
+function PostImageUploader({ current, onChange }) {
+  const inputRef = useRef()
+  const [uploading, setUploading] = useState(false)
+  const [err, setErr] = useState('')
+
+  const handleFile = async (file) => {
+    if (!file) return
+    setErr('')
+    setUploading(true)
+    try {
+      const { url } = await uploadPostImage(file)
+      onChange(url)
+    } catch (e) {
+      setErr(e.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="post-image-uploader">
+      <span className="mono admin-section-title" style={{ fontSize: '0.65rem' }}>// Cover Image (optional)</span>
+      <div className="post-image-row">
+        {current && (
+          <div className="post-image-preview">
+            <img src={current} alt="cover" />
+            <button type="button" className="post-image-remove" onClick={() => onChange('')}>×</button>
+          </div>
+        )}
+        <button
+          type="button"
+          className="btn"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          style={{ alignSelf: 'flex-start' }}
+        >
+          {uploading ? 'Uploading…' : current ? 'Change image' : '↑ Upload image'}
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={(e) => handleFile(e.target.files[0])}
+        />
+        {current && !uploading && (
+          <input
+            value={current}
+            readOnly
+            placeholder="Image URL"
+            style={{ flex: 1, fontSize: '0.7rem' }}
+          />
+        )}
+      </div>
+      {err && <span className="mono" style={{ color: 'var(--red)', fontSize: '0.7rem' }}>{err}</span>}
+    </div>
+  )
+}
+
 // ── Post Manager ──────────────────────────────────────────────────────────────
 function PostsTab() {
   const [posts, setPosts] = useState([])
   const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({ title: '', content: '', category: 'book', related_title: '', rating: 5, published: true })
+  const [form, setForm] = useState({ title: '', content: '', category: 'book', related_title: '', rating: 5, published: true, cover_image: '' })
   const [saving, setSaving] = useState(false)
   const formRef = useRef()
 
@@ -330,12 +391,12 @@ function PostsTab() {
 
   const resetForm = () => {
     setEditing(null)
-    setForm({ title: '', content: '', category: 'book', related_title: '', rating: 5, published: true })
+    setForm({ title: '', content: '', category: 'book', related_title: '', rating: 5, published: true, cover_image: '' })
   }
 
   const loadPost = (post) => {
     setEditing(post.id)
-    setForm({ title: post.title, content: post.content, category: post.category, related_title: post.related_title || '', rating: post.rating || 5, published: post.published })
+    setForm({ title: post.title, content: post.content, category: post.category, related_title: post.related_title || '', rating: post.rating || 5, published: post.published, cover_image: post.cover_image || '' })
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
@@ -368,11 +429,24 @@ function PostsTab() {
         <div className="post-form">
           <input placeholder="Title *" value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} required />
           <div className="post-form-row">
-            <select value={form.category} onChange={(e) => setForm(f => ({ ...f, category: e.target.value }))}>
+            <select value={['book','film','series','personal'].includes(form.category) ? form.category : 'custom'}
+              onChange={(e) => {
+                if (e.target.value !== 'custom') setForm(f => ({ ...f, category: e.target.value }))
+              }}>
               <option value="book">Book</option>
               <option value="film">Film</option>
               <option value="series">Series</option>
+              <option value="personal">Personal</option>
+              <option value="custom">Custom…</option>
             </select>
+            {!['book','film','series','personal'].includes(form.category) && (
+              <input
+                placeholder="Category name"
+                value={form.category}
+                onChange={(e) => setForm(f => ({ ...f, category: e.target.value }))}
+                style={{ maxWidth: 160 }}
+              />
+            )}
             <input
               placeholder="Related title"
               value={form.related_title}
@@ -386,6 +460,13 @@ function PostsTab() {
             />
           </div>
           <PostEditor value={form.content} onChange={(html) => setForm(f => ({ ...f, content: html }))} />
+
+          {/* Cover image upload */}
+          <PostImageUploader
+            current={form.cover_image}
+            onChange={(url) => setForm(f => ({ ...f, cover_image: url }))}
+          />
+
           <div className="post-form-actions">
             <label className="post-published-toggle">
               <input type="checkbox" checked={form.published}
@@ -514,6 +595,16 @@ export default function Admin() {
   const [tab, setTab] = useState('dashboard')
   const [previewTrack, setPreviewTrack] = useState(null)
   const audioRef = useRef()
+
+  // Auto-logout when a 401 clears the token from any API call
+  useEffect(() => {
+    const handleExpiry = () => {
+      localStorage.removeItem('admin_token')
+      setAuthed(false)
+    }
+    window.addEventListener('admin:session-expired', handleExpiry)
+    return () => window.removeEventListener('admin:session-expired', handleExpiry)
+  }, [])
 
   useEffect(() => {
     if (!previewTrack || !audioRef.current) return

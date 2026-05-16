@@ -53,75 +53,340 @@
 .parallax-cd-wrap {
   position: absolute;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
+
+.parallax-cd-glow {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 300px; height: 300px;
+  transform: translate(-50%, -50%) scale(1);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  background: radial-gradient(ellipse,
+    rgba(201,168,71,0.55)  0%,
+    rgba(200,122,88,0.22)  36%,
+    rgba(45,120,112,0.08)  58%,
+    transparent            72%
+  );
+  transition: opacity 0.38s ease, transform 0.38s ease;
+}
+
+.parallax-cd-wrap:has(.parallax-cd:hover) .parallax-cd-glow {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.22);
+}
+.parallax-cd-wrap.is-playing .parallax-cd-glow {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.48);
+  background: radial-gradient(ellipse,
+    rgba(201,168,71,0.7)   0%,
+    rgba(200,122,88,0.30)  32%,
+    rgba(45,120,112,0.12)  54%,
+    transparent            70%
+  );
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 1;    transform: translate(-50%, -50%) scale(1.48); }
+  50%       { opacity: 0.65; transform: translate(-50%, -50%) scale(1.35); }
+}
+
 .parallax-cd {
-  width: 108px;
-  height: 108px;
+  width: 155px;
+  height: 155px;
   border-radius: 50%;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  background:
-    conic-gradient(
-      rgba(201, 168, 71, 0.2)  0deg,
-      rgba(200, 122, 88, 0.16) 65deg,
-      rgba(45, 120, 112, 0.2)  130deg,
-      rgba(154, 56, 85, 0.14)  195deg,
-      rgba(201, 168, 71, 0.2)  260deg,
-      rgba(200, 122, 88, 0.16) 325deg,
-      rgba(201, 168, 71, 0.2)  360deg
-    ),
-    radial-gradient(circle, #1d3832 0%, #122220 40%, #0e1e1c 100%);
+  background: #0e1e1c;
   box-shadow:
     0 8px 40px rgba(0,0,0,0.88),
-    0 0 30px rgba(201, 168, 71, 0.07),
-    inset 0 0 20px rgba(201, 168, 71, 0.04);
-  animation: cd-slow-spin 22s linear infinite;
+    inset 0 0 16px rgba(0,0,0,0.5);
+  animation: cd-slow-spin 24s linear infinite;
+  cursor: pointer;
+  pointer-events: all;
+  border: none;
+  outline: none;
+  padding: 0;
+  overflow: hidden;
+  z-index: 1;
 }
+.parallax-cd.playing {
+  animation: cd-slow-spin 9s linear infinite;
+}
+
 @keyframes cd-slow-spin {
   to { transform: rotate(360deg); }
 }
+
+.parallax-cd-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  filter: brightness(0.82) saturate(0.88) contrast(1.04);
+  transition: filter 0.35s ease;
+  pointer-events: none;
+  user-select: none;
+}
+.parallax-cd:hover .parallax-cd-img,
+.parallax-cd.playing .parallax-cd-img {
+  filter: brightness(0.95) saturate(1.05) contrast(1.06);
+}
+
 .parallax-cd-sheen {
   position: absolute;
-  inset: 6px;
+  inset: 0;
   border-radius: 50%;
   background: conic-gradient(
     from 0deg,
-    rgba(255,255,255,0.04) 0deg,
+    rgba(255,255,255,0.06) 0deg,
     rgba(255,255,255,0.0)  90deg,
-    rgba(255,255,255,0.06) 180deg,
+    rgba(255,255,255,0.09) 180deg,
     rgba(255,255,255,0.0)  270deg,
-    rgba(255,255,255,0.04) 360deg
+    rgba(255,255,255,0.06) 360deg
   );
   pointer-events: none;
-}
-.parallax-cd-label {
-  position: absolute;
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #102018, #091614);
-  border: 1px solid rgba(201, 168, 71, 0.2);
-}
-.parallax-cd-hole {
-  position: absolute;
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: #060e0c;
-  box-shadow: 0 0 0 1.5px rgba(201, 168, 71, 0.28);
   z-index: 2;
 }
 
-/* ── Botanical SVG Vines ── */
+.parallax-cd-hole {
+  position: absolute;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #060e0c;
+  box-shadow:
+    0 0 0 2px rgba(201, 168, 71, 0.35),
+    0 0 8px rgba(0,0,0,0.8);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.parallax-cd-play-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: rgba(201, 168, 71, 0.0);
+  z-index: 4;
+  pointer-events: none;
+  transition: color 0.22s ease, text-shadow 0.22s ease;
+  text-shadow: none;
+}
+.parallax-cd:hover .parallax-cd-play-icon {
+  color: rgba(201, 168, 71, 0.75);
+  text-shadow: 0 0 20px rgba(201, 168, 71, 0.6);
+}
+.parallax-cd-play-icon.hide {
+  color: rgba(201, 168, 71, 0.0) !important;
+}
+
+.parallax-cd-label-tag {
+  font-family: var(--font-sc);
+  font-size: 0.55rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 71, 0.38);
+  pointer-events: none;
+  user-select: none;
+  text-shadow: 0 0 8px rgba(201, 168, 71, 0.2);
+  transition: color 0.35s ease, text-shadow 0.35s ease;
+  position: relative;
+  z-index: 1;
+}
+.parallax-cd-wrap:has(.parallax-cd:hover) .parallax-cd-label-tag {
+  color: rgba(201, 168, 71, 0.75);
+  text-shadow: 0 0 16px rgba(201, 168, 71, 0.5);
+}
+.parallax-cd-wrap.is-playing .parallax-cd-label-tag {
+  color: rgba(201, 168, 71, 0.88);
+  text-shadow:
+    0 0 14px rgba(201, 168, 71, 0.6),
+    0 0 28px rgba(201, 168, 71, 0.3);
+}
+
+/* ── Shared floating image base ── */
+.parallax-portrait,
+.parallax-cait2,
+.parallax-jinx {
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Mucha portrait — centred-right atmospheric shrine ── */
+.parallax-portrait {
+  position: absolute;
+  right: 4%;
+  top: 0%;
+  width: 24%;
+  max-width: 300px;
+  min-width: 180px;
+}
+.parallax-portrait-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0.58;
+  filter: brightness(0.68) saturate(0.80) contrast(1.12) sepia(0.06);
+  -webkit-mask-image: radial-gradient(
+    ellipse 86% 90% at 50% 46%,
+    black 40%, rgba(0,0,0,0.85) 65%, rgba(0,0,0,0.3) 82%, transparent 96%
+  );
+  mask-image: radial-gradient(
+    ellipse 86% 90% at 50% 46%,
+    black 40%, rgba(0,0,0,0.85) 65%, rgba(0,0,0,0.3) 82%, transparent 96%
+  );
+  filter: brightness(0.68) saturate(0.80) contrast(1.12) sepia(0.06)
+          drop-shadow(0 12px 48px rgba(0,0,0,0.7));
+  animation: portrait-float 9s ease-in-out infinite;
+}
+@keyframes portrait-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-14px) rotate(0.4deg); }
+}
+
+/* ── Cait2 — mid-left background presence ── */
+.parallax-cait2 {
+  position: absolute;
+  left: 22%;
+  top: 4%;
+  width: 17%;
+  max-width: 210px;
+  min-width: 120px;
+}
+.parallax-cait2-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0.42;
+  -webkit-mask-image: radial-gradient(
+    ellipse 85% 88% at 50% 48%,
+    black 38%, rgba(0,0,0,0.8) 62%, rgba(0,0,0,0.25) 80%, transparent 95%
+  );
+  mask-image: radial-gradient(
+    ellipse 85% 88% at 50% 48%,
+    black 38%, rgba(0,0,0,0.8) 62%, rgba(0,0,0,0.25) 80%, transparent 95%
+  );
+  filter: brightness(0.65) saturate(0.78) contrast(1.1) sepia(0.05)
+          drop-shadow(0 8px 32px rgba(0,0,0,0.6));
+  animation: cait2-float 11s ease-in-out infinite;
+}
+@keyframes cait2-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  40%       { transform: translateY(-9px) rotate(0.5deg); }
+  70%       { transform: translateY(5px) rotate(-0.3deg); }
+}
+
+/* ── Jinx — lower-right atmospheric depth ── */
+.parallax-jinx {
+  position: absolute;
+  right: 22%;
+  bottom: 6%;
+  width: 15%;
+  max-width: 195px;
+  min-width: 110px;
+}
+.parallax-jinx-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0.40;
+  -webkit-mask-image: radial-gradient(
+    ellipse 84% 86% at 50% 46%,
+    black 36%, rgba(0,0,0,0.78) 60%, rgba(0,0,0,0.2) 78%, transparent 94%
+  );
+  mask-image: radial-gradient(
+    ellipse 84% 86% at 50% 46%,
+    black 36%, rgba(0,0,0,0.78) 60%, rgba(0,0,0,0.2) 78%, transparent 94%
+  );
+  filter: brightness(0.62) saturate(0.76) contrast(1.1) sepia(0.04)
+          drop-shadow(0 8px 32px rgba(0,0,0,0.65));
+  animation: jinx-float 14s ease-in-out infinite;
+}
+@keyframes jinx-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  35%       { transform: translateY(-11px) rotate(-0.4deg); }
+  65%       { transform: translateY(6px) rotate(0.3deg); }
+}
+
+/* ── White lily panel — botanical canopy, top-left sweep ── */
+.parallax-lilies {
+  position: absolute;
+  left: -3%;
+  top: -5%;
+  width: 40%;
+  max-width: 440px;
+  min-width: 220px;
+  pointer-events: none;
+  z-index: 1;
+}
+.parallax-lilies-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0.40;
+  -webkit-mask-image: linear-gradient(
+    140deg,
+    black 0%,
+    black 48%,
+    rgba(0,0,0,0.7) 64%,
+    rgba(0,0,0,0.2) 80%,
+    transparent 92%
+  );
+  mask-image: linear-gradient(
+    140deg,
+    black 0%,
+    black 48%,
+    rgba(0,0,0,0.7) 64%,
+    rgba(0,0,0,0.2) 80%,
+    transparent 92%
+  );
+  filter: brightness(0.58) saturate(0.68) contrast(1.12)
+          drop-shadow(0 6px 24px rgba(0,0,0,0.5));
+  animation: lilies-drift 12s ease-in-out infinite;
+}
+@keyframes lilies-drift {
+  0%, 100% { transform: translate(0px, 0px); }
+  33%       { transform: translate(6px, -8px); }
+  66%       { transform: translate(-4px, 5px); }
+}
+
+/* ── Botanical SVG Vines (right) ── */
 .parallax-botanical {
   position: absolute;
-  right: 6%;
-  top: 5%;
-  width: 260px;
-  height: 520px;
-  opacity: 0.9;
+  right: 4%;
+  top: 3%;
+  width: 280px;
+  height: 600px;
+  opacity: 0.95;
 }
 .botanical-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Botanical SVG (left accent) ── */
+.parallax-botanical-left {
+  position: absolute;
+  left: 1%;
+  bottom: 0%;
+  width: 160px;
+  height: 440px;
+  opacity: 0.85;
+}
+.parallax-botanical-left svg {
   width: 100%;
   height: 100%;
 }

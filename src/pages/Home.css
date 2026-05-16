@@ -6,6 +6,21 @@
   overflow: hidden;
 }
 
+/* Peony wallpaper texture — breathes behind everything */
+.home-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('../assets/bg-ARTNV.jpg');
+  background-size: 640px;
+  background-repeat: repeat;
+  background-position: center top;
+  opacity: 0.032;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
 .home-scene {
   position: absolute;
   inset: 0;
@@ -47,12 +62,28 @@
   width: 100%;
 }
 
+/* ── Art Nouveau SVG decorative overlay ── */
+.artnv-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
 @media (max-width: 768px) {
   .home-content {
-    padding: 100px 20px 60px;
+    padding: 90px 20px 60px;
+    min-height: 100dvh;
   }
   .home-main {
     flex-direction: column;
-    gap: 48px;
+    gap: 40px;
   }
+}
+
+@media (max-width: 480px) {
+  .home-content { padding: 80px 16px 48px; }
+  .home-main { gap: 32px; }
 }

@@ -249,3 +249,25 @@
   border-left: 1px solid rgba(201, 168, 71, 0.06);
 }
 .player-close:hover { color: rgba(240, 226, 204, 0.7); }
+
+/* ─── Mobile ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  .player-bar { height: 66px; }
+  .player-drive-bay { width: 90px; }
+  .player-ribs { width: 10px; }
+  .player-cd-clip { width: 44px; height: 44px; }
+  .player-info { width: 140px; padding: 0 14px 0 12px; }
+  .player-title { font-size: 0.82rem; }
+  .player-artist { font-size: 0.55rem; }
+  .player-progress-wrap { padding: 0 12px; gap: 8px; }
+  .player-time { font-size: 0.6rem; }
+  .player-controls { padding-right: 10px; }
+  .player-btn { width: 36px; height: 36px; }
+  .player-close { padding: 8px 14px; }
+}
+
+@media (max-width: 400px) {
+  .player-info { width: 110px; padding: 0 10px; }
+  .player-time { display: none; }
+  .player-progress-wrap { padding: 0 8px; }
+}
