@@ -47,6 +47,16 @@
   padding: 12px 16px;
 }
 
+.admin-login-waking {
+  font-size: 0.72rem;
+  color: rgba(201, 168, 71, 0.75);
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  background: rgba(201, 168, 71, 0.06);
+  border: 1px solid rgba(201, 168, 71, 0.18);
+  border-radius: var(--radius);
+}
+
 .admin-login-error {
   font-size: 0.72rem;
   color: var(--red);

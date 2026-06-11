@@ -1,27 +1,62 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { adminLogin } from '../../lib/api'
 import './AdminLogin.css'
 
-export default function AdminLogin({ onSuccess }) {
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(false)
+const WAKE_SECONDS = 35
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+export default function AdminLogin({ onSuccess }) {
+  const [password,  setPassword]  = useState('')
+  const [error,     setError]     = useState(null)
+  const [status,    setStatus]    = useState('idle') // idle | loading | waking
+  const [countdown, setCountdown] = useState(0)
+  const intervalRef = useRef(null)
+  const savedPwd    = useRef('')
+
+  useEffect(() => () => clearInterval(intervalRef.current), [])
+
+  const doLogin = useCallback(async (pwd) => {
     setError(null)
-    setLoading(true)
+    setStatus('loading')
     try {
-      const { access_token } = await adminLogin(password)
+      const { access_token } = await adminLogin(pwd)
       localStorage.setItem('admin_token', access_token)
       onSuccess()
     } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
+      const isSleeping =
+        err.name === 'AbortError' ||
+        err.message === 'Failed to fetch' ||
+        err.message === 'Load failed' ||
+        err.message?.toLowerCase().includes('network')
+
+      if (isSleeping) {
+        setStatus('waking')
+        setCountdown(WAKE_SECONDS)
+        intervalRef.current = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(intervalRef.current)
+              doLogin(savedPwd.current)
+              return 0
+            }
+            return prev - 1
+          })
+        }, 1000)
+      } else {
+        setError(err.message)
+        setStatus('idle')
+      }
     }
+  }, [onSuccess])
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    clearInterval(intervalRef.current)
+    savedPwd.current = password
+    doLogin(password)
   }
+
+  const busy = status !== 'idle'
 
   return (
     <div className="admin-login-wrap">
@@ -40,13 +75,21 @@ export default function AdminLogin({ onSuccess }) {
             type="password"
             placeholder="enter password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             className="admin-login-input"
             autoFocus
+            disabled={busy}
           />
+          {status === 'waking' && (
+            <div className="admin-login-waking mono">
+              Backend waking up — retrying in {countdown}s…
+            </div>
+          )}
           {error && <div className="admin-login-error mono">{error}</div>}
-          <button type="submit" className="btn btn-yellow admin-login-btn" disabled={loading}>
-            {loading ? 'Checking...' : 'Enter the archive →'}
+          <button type="submit" className="btn btn-yellow admin-login-btn" disabled={busy}>
+            {status === 'waking'  ? `Waking up… ${countdown}s`
+              : status === 'loading' ? 'Checking…'
+              : 'Enter the archive →'}
           </button>
         </form>
       </motion.div>
