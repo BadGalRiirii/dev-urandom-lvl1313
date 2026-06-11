@@ -13,10 +13,10 @@
   inset: 0;
   z-index: 0;
   background-image: url('../assets/bg-ARTNV.jpg');
-  background-size: 640px;
+  background-size: 560px;
   background-repeat: repeat;
   background-position: center top;
-  opacity: 0.032;
+  opacity: 0.038;
   mix-blend-mode: overlay;
   pointer-events: none;
 }
@@ -27,16 +27,18 @@
   z-index: 0;
 }
 
+/* Atmospheric gradient — pools of light at the scene's extremes */
 .home-gradient-floor {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 18% 48%, rgba(45, 120, 112, 0.06) 0%, transparent 55%),
-    radial-gradient(ellipse at 78% 28%, rgba(201, 168, 71, 0.05) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 80%, rgba(154, 56, 85, 0.04) 0%, transparent 50%),
-    linear-gradient(to bottom, transparent 35%, var(--bg) 100%);
+    radial-gradient(ellipse at 12% 52%, rgba(45, 120, 112, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 82% 24%, rgba(201, 168, 71, 0.055) 0%, transparent 52%),
+    radial-gradient(ellipse at 52% 85%, rgba(154, 56, 85, 0.045) 0%, transparent 48%),
+    linear-gradient(to bottom, transparent 30%, var(--bg) 100%);
 }
 
+/* ── Content layer (above scene) ── */
 .home-content {
   position: relative;
   z-index: 2;
@@ -44,46 +46,74 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 120px 40px 80px;
-  min-height: calc(100vh - 60px);
+  padding: 108px 68px 80px;
+  min-height: 100vh;
+  pointer-events: none;
 }
 
+/* ── Three-zone triptych: [hero] [spacer] [feed] ── */
 .home-main {
   display: flex;
-  align-items: flex-start;
-  gap: clamp(40px, 6vw, 120px);
-  flex-wrap: wrap;
-  max-width: 1100px;
+  align-items: center;
+  width: 100%;
 }
 
+/* Hero text — anchored left */
+.home-hero {
+  flex: 0 0 auto;
+  pointer-events: all;
+}
+
+/* Atmospheric void — where the portrait presides */
+.home-spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Feed panel — anchored right */
+.home-feed {
+  flex: 0 0 auto;
+  pointer-events: all;
+  align-self: center;
+}
+
+/* ── Ticker strip ── */
 .home-ticker {
   position: relative;
   z-index: 2;
   width: 100%;
 }
 
-/* ── Art Nouveau SVG decorative overlay ── */
+/* ── Art Nouveau SVG frame overlay ── */
 .artnv-overlay {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
-@media (max-width: 768px) {
+/* ─── Responsive ─── */
+@media (max-width: 1100px) {
   .home-content {
-    padding: 90px 20px 60px;
+    padding: 100px 48px 72px;
+  }
+}
+
+@media (max-width: 860px) {
+  .home-content {
+    padding: 90px 24px 60px;
     min-height: 100dvh;
   }
   .home-main {
     flex-direction: column;
-    gap: 40px;
+    align-items: flex-start;
+    gap: 48px;
   }
+  .home-spacer { display: none; }
 }
 
 @media (max-width: 480px) {
   .home-content { padding: 80px 16px 48px; }
-  .home-main { gap: 32px; }
 }

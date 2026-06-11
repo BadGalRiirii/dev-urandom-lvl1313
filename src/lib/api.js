@@ -1,3 +1,5 @@
+import { fetchBooks, fetchBook, fetchTracks, fetchPosts, fetchPost } from './supabase'
+
 const BASE = ''
 
 const authHeaders = () => {
@@ -5,7 +7,7 @@ const authHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-const req = async (path, opts = {}, timeout = 7000) => {
+const req = async (path, opts = {}, timeout = 5000) => {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeout)
   try {
@@ -32,8 +34,8 @@ const req = async (path, opts = {}, timeout = 7000) => {
 }
 
 // ── Books ────────────────────────────────────────────
-export const getBooks  = () => req('/api/books')
-export const getBook   = (id) => req(`/api/books/${id}`)
+export const getBooks  = fetchBooks
+export const getBook   = fetchBook
 export const uploadBook = async (formData) => {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 120000)
@@ -55,7 +57,7 @@ export const uploadBook = async (formData) => {
 export const deleteBook = (id) => req(`/api/books/${id}`, { method: 'DELETE' })
 
 // ── Tracks ───────────────────────────────────────────
-export const getTracks = () => req('/api/tracks')
+export const getTracks = fetchTracks
 export const uploadTrack = async (formData) => {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 120000)
@@ -77,9 +79,9 @@ export const uploadTrack = async (formData) => {
 export const deleteTrack = (id) => req(`/api/tracks/${id}`, { method: 'DELETE' })
 
 // ── Posts ────────────────────────────────────────────
-export const getPosts    = () => req('/api/posts')
+export const getPosts    = fetchPosts
 export const getAllPosts  = () => req('/api/admin/posts')
-export const getPost     = (id) => req(`/api/posts/${id}`)
+export const getPost     = fetchPost
 export const createPost  = (data) => req('/api/posts', { method: 'POST', body: JSON.stringify(data) })
 export const updatePost  = (id, data) => req(`/api/posts/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deletePost  = (id) => req(`/api/posts/${id}`, { method: 'DELETE' })
@@ -112,5 +114,3 @@ export const uploadPostImage = async (file) => {
   } catch (e) { clearTimeout(timer); throw e }
 }
 
-// ── Epub ─────────────────────────────────────────────
-export const parseEpub = (id) => req(`/api/epub/parse/${id}`)

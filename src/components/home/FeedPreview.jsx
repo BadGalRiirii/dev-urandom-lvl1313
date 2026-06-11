@@ -74,6 +74,7 @@ export default function FeedPreview() {
 
   return (
     <div className="feed-preview">
+      <div className="feed-corner-br" aria-hidden="true" />
       <div className="feed-header">
         <span className="feed-label">Recent Additions</span>
         <div className="feed-header-line" />

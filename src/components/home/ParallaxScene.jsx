@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { motion, useMotionValue, useSpring } from 'framer-motion'
+import { motion, useSpring, useTransform } from 'framer-motion'
 import abbaImg   from '../../assets/ABBA.png'
 import queenImg  from '../../assets/QUEEN.png'
 import caitImg   from '../../assets/CAIT-ARTNV.jpg'
 import liliesImg from '../../assets/WHITELILIES.jpg'
 import cait2Img  from '../../assets/cait2.jpg'
 import jinxImg   from '../../assets/jinx.jpg'
+import { getTracks } from '../../lib/api'
 import './ParallaxScene.css'
-
-/* Drop abba.mp3 and queen.mp3 into /public to activate audio */
 
 const BOOKS = [
   { color: '#0d2825', width: 26, height: 152, x: '7%',    y: '33%', rot: -3 },
@@ -20,32 +19,37 @@ const BOOKS = [
   { color: '#1a3028', width: 18, height: 136, x: '18.2%', y: '33%', rot: -1 },
 ]
 
-const CDS = [
-  { x: '55%', y: '8%',  img: abbaImg,  audio: '/abba.mp3',  label: 'ABBA'  },
-  { x: '60%', y: '50%', img: queenImg, audio: '/queen.mp3', label: 'QUEEN' },
+const CDS_META = [
+  { img: abbaImg,  label: 'ABBA',  matchKey: 'ABBA',  x: '18%', y: '70%', depth: 0.014 },
+  { img: queenImg, label: 'QUEEN', matchKey: 'QUEEN', x: '65%', y: '74%', depth: 0.020 },
 ]
 
 let _activeAudio      = null
 let _activeSetPlaying = null
 
-function BookStack({ mouse }) {
-  const x = useSpring(useMotionValue(0), { stiffness: 55, damping: 22 })
-  const y = useSpring(useMotionValue(0), { stiffness: 55, damping: 22 })
-  useEffect(() => { x.set(mouse.x * 0.007); y.set(mouse.y * 0.007) }, [mouse.x, mouse.y, x, y])
+/* ── Full-screen WHITELILIES background — gentle counter-parallax ── */
+function LilyBg({ mouseX, mouseY }) {
+  const x = useSpring(useTransform(mouseX, v => v * -0.003), { stiffness: 5, damping: 38 })
+  const y = useSpring(useTransform(mouseY, v => v * -0.002), { stiffness: 5, damping: 38 })
+  return (
+    <motion.div
+      className="lily-bg-scene"
+      style={{ x, y, backgroundImage: `url(${liliesImg})` }}
+    />
+  )
+}
 
+/* ── Book spines ── */
+function BookStack({ mouseX, mouseY }) {
+  const x = useSpring(useTransform(mouseX, v => v * 0.007), { stiffness: 55, damping: 22 })
+  const y = useSpring(useTransform(mouseY, v => v * 0.007), { stiffness: 55, damping: 22 })
   return (
     <motion.div className="parallax-books" style={{ x, y }}>
       {BOOKS.map((b, i) => (
-        <div
-          key={i}
-          className="book-spine-parallax"
-          style={{
-            background: b.color,
-            width: b.width, height: b.height,
-            left: b.x, top: b.y,
-            transform: `rotate(${b.rot}deg)`,
-          }}
-        >
+        <div key={i} className="book-spine-parallax" style={{
+          background: b.color, width: b.width, height: b.height,
+          left: b.x, top: b.y, transform: `rotate(${b.rot}deg)`,
+        }}>
           <div className="book-spine-line" />
         </div>
       ))}
@@ -53,15 +57,15 @@ function BookStack({ mouse }) {
   )
 }
 
-function CDisc({ disc, mouse, depth }) {
-  const mx        = useSpring(useMotionValue(0), { stiffness: 38, damping: 16 })
-  const my        = useSpring(useMotionValue(0), { stiffness: 38, damping: 16 })
-  const audioRef  = useRef(null)
+/* ── CD disc — clickable, plays audio ── */
+function CDisc({ disc, mouseX, mouseY }) {
+  const mx       = useSpring(useTransform(mouseX, v => v * disc.depth), { stiffness: 38, damping: 16 })
+  const my       = useSpring(useTransform(mouseY, v => v * disc.depth), { stiffness: 38, damping: 16 })
+  const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
 
-  useEffect(() => { mx.set(mouse.x * depth); my.set(mouse.y * depth) }, [mouse.x, mouse.y, mx, my, depth])
-
   useEffect(() => {
+    if (!disc.audio) { audioRef.current = null; return }
     const audio = new Audio(disc.audio)
     audio.loop = true
     audioRef.current = audio
@@ -72,16 +76,11 @@ function CDisc({ disc, mouse, depth }) {
     const audio = audioRef.current
     if (!audio) return
     if (playing) {
-      audio.pause()
-      setPlaying(false)
+      audio.pause(); setPlaying(false)
       if (_activeAudio === audio) { _activeAudio = null; _activeSetPlaying = null }
     } else {
-      if (_activeAudio && _activeAudio !== audio) {
-        _activeAudio.pause()
-        _activeSetPlaying?.(false)
-      }
-      _activeAudio      = audio
-      _activeSetPlaying = setPlaying
+      if (_activeAudio && _activeAudio !== audio) { _activeAudio.pause(); _activeSetPlaying?.(false) }
+      _activeAudio = audio; _activeSetPlaying = setPlaying
       audio.play().then(() => setPlaying(true)).catch(() => {})
     }
   }
@@ -92,29 +91,26 @@ function CDisc({ disc, mouse, depth }) {
       style={{ x: mx, y: my, left: disc.x, top: disc.y }}
     >
       <div className="parallax-cd-glow" />
-
       <button
         className={`parallax-cd${playing ? ' playing' : ''}`}
         onClick={toggle}
         aria-label={playing ? `Pause ${disc.label}` : `Play ${disc.label}`}
-        title={playing ? `Pause ${disc.label}` : `Play ${disc.label}`}
+        title={disc.audio ? (playing ? `Pause ${disc.label}` : `Play ${disc.label}`) : `${disc.label} — upload via admin`}
       >
         <img src={disc.img} alt={disc.label} className="parallax-cd-img" draggable={false} />
         <div className="parallax-cd-sheen" />
         <div className="parallax-cd-hole" />
-        <div className={`parallax-cd-play-icon${playing ? ' hide' : ''}`}>▶</div>
+        {disc.audio && <div className={`parallax-cd-play-icon${playing ? ' hide' : ''}`}>▶</div>}
       </button>
-
       <div className="parallax-cd-label-tag">{disc.label}</div>
     </motion.div>
   )
 }
 
-function BotanicalVines({ mouse }) {
-  const x = useSpring(useMotionValue(0), { stiffness: 18, damping: 22 })
-  const y = useSpring(useMotionValue(0), { stiffness: 18, damping: 22 })
-  useEffect(() => { x.set(mouse.x * -0.006); y.set(mouse.y * -0.006) }, [mouse.x, mouse.y, x, y])
-
+/* ── Botanical vines (right) ── */
+function BotanicalVines({ mouseX, mouseY }) {
+  const x = useSpring(useTransform(mouseX, v => v * -0.006), { stiffness: 18, damping: 22 })
+  const y = useSpring(useTransform(mouseY, v => v * -0.006), { stiffness: 18, damping: 22 })
   return (
     <motion.div className="parallax-botanical" style={{ x, y }}>
       <svg className="botanical-svg" viewBox="0 0 280 600" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -206,11 +202,10 @@ function BotanicalVines({ mouse }) {
   )
 }
 
-function BotanicalLeft({ mouse }) {
-  const x = useSpring(useMotionValue(0), { stiffness: 14, damping: 24 })
-  const y = useSpring(useMotionValue(0), { stiffness: 14, damping: 24 })
-  useEffect(() => { x.set(mouse.x * 0.004); y.set(mouse.y * 0.004) }, [mouse.x, mouse.y, x, y])
-
+/* ── Botanical left accent ── */
+function BotanicalLeft({ mouseX, mouseY }) {
+  const x = useSpring(useTransform(mouseX, v => v * 0.004), { stiffness: 14, damping: 24 })
+  const y = useSpring(useTransform(mouseY, v => v * 0.004), { stiffness: 14, damping: 24 })
   return (
     <motion.div className="parallax-botanical-left" style={{ x, y }}>
       <svg viewBox="0 0 160 440" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -237,63 +232,50 @@ function BotanicalLeft({ mouse }) {
   )
 }
 
-/* ── Mucha-style portrait — right presiding figure ── */
-function FloatingPortrait({ mouse }) {
-  const x = useSpring(useMotionValue(0), { stiffness: 16, damping: 24 })
-  const y = useSpring(useMotionValue(0), { stiffness: 16, damping: 24 })
-  useEffect(() => { x.set(mouse.x * 0.013); y.set(mouse.y * 0.013) }, [mouse.x, mouse.y, x, y])
-
+/* ── Three figures — static, bottom-aligned triptych ── */
+function Figures() {
   return (
-    <motion.div className="parallax-portrait" style={{ x, y }}>
-      <img src={caitImg} alt="" className="parallax-portrait-img" draggable={false} />
-    </motion.div>
+    <>
+      <div className="parallax-cait2">
+        <img src={cait2Img} alt="" className="parallax-cait2-img" draggable={false} />
+      </div>
+      <div className="parallax-portrait">
+        <img src={caitImg} alt="" className="parallax-portrait-img" draggable={false} />
+      </div>
+      <div className="parallax-jinx">
+        <img src={jinxImg} alt="" className="parallax-jinx-img" draggable={false} />
+      </div>
+    </>
   )
 }
 
-/* ── White lily panel — botanical canopy top-left ── */
-function FloatingLilies({ mouse }) {
-  const x = useSpring(useMotionValue(0), { stiffness: 10, damping: 30 })
-  const y = useSpring(useMotionValue(0), { stiffness: 10, damping: 30 })
-  useEffect(() => { x.set(mouse.x * -0.008); y.set(mouse.y * -0.005) }, [mouse.x, mouse.y, x, y])
+export default function ParallaxScene({ mouseX, mouseY }) {
+  const [discAudio, setDiscAudio] = useState({})
 
-  return (
-    <motion.div className="parallax-lilies" style={{ x, y }}>
-      <img src={liliesImg} alt="" className="parallax-lilies-img" draggable={false} />
-    </motion.div>
-  )
-}
+  useEffect(() => {
+    getTracks()
+      .then((tracks) => {
+        const urls = {}
+        for (const meta of CDS_META) {
+          const track = tracks.find(t =>
+            t.title?.toUpperCase().includes(meta.matchKey) ||
+            t.artist?.toUpperCase().includes(meta.matchKey)
+          )
+          if (track?.url) urls[meta.matchKey] = track.url
+        }
+        setDiscAudio(urls)
+      })
+      .catch(() => {})
+  }, [])
 
-/* ── Cait2 — mid-background, slightly left-of-centre ── */
-function FloatingCait2({ mouse }) {
-  const x = useSpring(useMotionValue(0), { stiffness: 13, damping: 26 })
-  const y = useSpring(useMotionValue(0), { stiffness: 13, damping: 26 })
-  useEffect(() => { x.set(mouse.x * 0.009); y.set(mouse.y * 0.007) }, [mouse.x, mouse.y, x, y])
+  const discs = CDS_META.map(m => ({ ...m, audio: discAudio[m.matchKey] ?? null }))
 
-  return (
-    <motion.div className="parallax-cait2" style={{ x, y }}>
-      <img src={cait2Img} alt="" className="parallax-cait2-img" draggable={false} />
-    </motion.div>
-  )
-}
-
-/* ── Jinx — lower-right, depth companion ── */
-function FloatingJinx({ mouse }) {
-  const x = useSpring(useMotionValue(0), { stiffness: 11, damping: 28 })
-  const y = useSpring(useMotionValue(0), { stiffness: 11, damping: 28 })
-  useEffect(() => { x.set(mouse.x * -0.007); y.set(mouse.y * 0.011) }, [mouse.x, mouse.y, x, y])
-
-  return (
-    <motion.div className="parallax-jinx" style={{ x, y }}>
-      <img src={jinxImg} alt="" className="parallax-jinx-img" draggable={false} />
-    </motion.div>
-  )
-}
-
-export default function ParallaxScene({ mouse }) {
   return (
     <div className="parallax-scene">
+      <LilyBg mouseX={mouseX} mouseY={mouseY} />
+
       <motion.div className="leak leak-teal"
-        animate={{ scale: [1, 1.12, 1], opacity: [0.05, 0.1, 0.05] }}
+        animate={{ scale: [1, 1.12, 1], opacity: [0.05, 0.10, 0.05] }}
         transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div className="leak leak-rose"
@@ -301,22 +283,19 @@ export default function ParallaxScene({ mouse }) {
         transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
       />
       <motion.div className="leak leak-gold"
-        animate={{ scale: [1, 1.1, 1], opacity: [0.03, 0.06, 0.03] }}
+        animate={{ scale: [1, 1.10, 1], opacity: [0.03, 0.06, 0.03] }}
         transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut', delay: 6 }}
       />
 
-      <FloatingLilies   mouse={mouse} />
-      <FloatingPortrait mouse={mouse} />
-      <FloatingCait2    mouse={mouse} />
-      <FloatingJinx     mouse={mouse} />
-      <BookStack        mouse={mouse} />
+      <Figures />
+      <BookStack mouseX={mouseX} mouseY={mouseY} />
 
-      {CDS.map((d, i) => (
-        <CDisc key={i} disc={d} mouse={mouse} depth={0.014 + i * 0.006} />
+      {discs.map((d, i) => (
+        <CDisc key={i} disc={d} mouseX={mouseX} mouseY={mouseY} />
       ))}
 
-      <BotanicalVines mouse={mouse} />
-      <BotanicalLeft  mouse={mouse} />
+      <BotanicalVines mouseX={mouseX} mouseY={mouseY} />
+      <BotanicalLeft  mouseX={mouseX} mouseY={mouseY} />
     </div>
   )
 }
