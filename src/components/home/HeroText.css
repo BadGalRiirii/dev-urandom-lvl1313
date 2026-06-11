@@ -1,14 +1,15 @@
 .hero {
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  max-width: 580px;
+  gap: 20px;
+  max-width: 540px;
 }
 
 .hero-chapter-stamp {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
+/* Ornamental rule between stamp and title */
 .hero-ornament {
   display: flex;
   align-items: center;
@@ -16,37 +17,41 @@
   margin-bottom: 2px;
 }
 .hero-ornament-line {
-  flex: 1;
-  max-width: 60px;
+  width: 52px;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(201, 168, 71, 0.45));
+  background: linear-gradient(to right, transparent, rgba(201, 168, 71, 0.42));
 }
 .hero-ornament-line.right {
-  background: linear-gradient(to left, transparent, rgba(201, 168, 71, 0.45));
+  background: linear-gradient(to left, transparent, rgba(201, 168, 71, 0.42));
 }
 .hero-ornament-mark {
-  font-size: 0.7rem;
-  color: rgba(201, 168, 71, 0.6);
-  letter-spacing: 0.2em;
+  font-size: 0.65rem;
+  color: rgba(201, 168, 71, 0.55);
+  letter-spacing: 0.22em;
 }
 
+/* The massive italic display title */
 .hero-title {
-  font-size: clamp(5rem, 10vw, 9.5rem);
-  line-height: 0.88;
-  letter-spacing: -0.01em;
+  font-size: clamp(4.8rem, 9.5vw, 9.2rem);
+  line-height: 0.87;
+  letter-spacing: -0.012em;
   color: var(--cream);
   font-style: italic;
   font-weight: 600;
   position: relative;
+  /* Subtle gold halo */
+  text-shadow:
+    0 0 60px rgba(201, 168, 71, 0.18),
+    0 0 120px rgba(201, 168, 71, 0.07);
 }
 
 .hero-sub {
-  font-size: clamp(1rem, 1.5vw, 1.12rem);
+  font-size: clamp(0.95rem, 1.4vw, 1.08rem);
   font-style: italic;
   color: var(--muted);
-  line-height: 1.65;
-  max-width: 400px;
-  letter-spacing: 0.01em;
+  line-height: 1.68;
+  max-width: 380px;
+  letter-spacing: 0.012em;
 }
 
 .hero-ctas {
@@ -64,7 +69,7 @@
 .fruit-card {
   position: relative;
   display: block;
-  width: 132px;
+  width: 130px;
   border: none;
   padding: 0;
   background: transparent;
@@ -72,17 +77,15 @@
   cursor: not-allowed;
   border-radius: 3px;
   overflow: visible;
-  /* Dim slightly to signal "not yet active" */
-  filter: brightness(0.82) saturate(0.88);
-  transition: filter 0.45s ease, transform 0.45s ease;
+  filter: brightness(0.80) saturate(0.86);
+  transition: filter 0.48s ease, transform 0.48s ease;
   transform: translateY(0px);
 }
 .fruit-card:hover {
-  filter: brightness(0.97) saturate(1.02);
-  transform: translateY(-4px);
+  filter: brightness(0.96) saturate(1.0);
+  transform: translateY(-5px);
 }
 
-/* The lily artwork */
 .fruit-card-img {
   width: 100%;
   height: auto;
@@ -104,7 +107,7 @@
   content: '';
   position: absolute;
   inset: 3px;
-  border: 1px solid rgba(201, 168, 71, 0.1);
+  border: 1px solid rgba(201, 168, 71, 0.10);
   border-radius: 1px;
 }
 
@@ -120,7 +123,7 @@
   gap: 2px;
   padding: 10px 12px 12px;
   background: linear-gradient(to top,
-    rgba(6, 14, 12, 0.92) 0%,
+    rgba(6, 14, 12, 0.93) 0%,
     rgba(9, 22, 20, 0.78) 60%,
     transparent 100%
   );
@@ -129,16 +132,16 @@
 }
 
 .fruit-card-ornament {
-  font-size: 0.42rem;
-  color: rgba(201, 168, 71, 0.5);
-  letter-spacing: 0.28em;
+  font-size: 0.40rem;
+  color: rgba(201, 168, 71, 0.50);
+  letter-spacing: 0.30em;
   line-height: 1;
 }
 
 .fruit-card-title {
   font-family: var(--font-sc);
-  font-size: 0.68rem;
-  letter-spacing: 0.26em;
+  font-size: 0.66rem;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
   color: rgba(201, 168, 71, 0.82);
   white-space: nowrap;
@@ -147,15 +150,15 @@
 
 .fruit-card-sub {
   font-family: var(--font-mono);
-  font-size: 0.44rem;
-  letter-spacing: 0.2em;
+  font-size: 0.42rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(240, 226, 204, 0.32);
+  color: rgba(240, 226, 204, 0.30);
   white-space: nowrap;
   line-height: 1;
 }
 
-/* Gold light corona — appears on hover */
+/* Gold light corona on hover */
 .fruit-card-corona {
   position: absolute;
   inset: -18px;
@@ -166,7 +169,7 @@
     transparent 70%
   );
   pointer-events: none;
-  transition: background 0.45s ease;
+  transition: background 0.48s ease;
   z-index: -1;
 }
 .fruit-card:hover .fruit-card-corona {
@@ -178,35 +181,31 @@
   );
 }
 
-/* Outer ambient drop shadow that glows on hover */
 .fruit-card::after {
   content: '';
   position: absolute;
   inset: -2px;
   border-radius: 4px;
   box-shadow:
-    0 12px 40px rgba(0,0,0,0.72),
+    0 14px 44px rgba(0,0,0,0.72),
     0 0 0 1px rgba(201,168,71,0.14);
   pointer-events: none;
-  transition: box-shadow 0.45s ease;
+  transition: box-shadow 0.48s ease;
 }
 .fruit-card:hover::after {
   box-shadow:
-    0 18px 60px rgba(0,0,0,0.82),
-    0 0 28px rgba(201,168,71,0.28),
-    0 0 60px rgba(200,122,88,0.1),
+    0 20px 64px rgba(0,0,0,0.82),
+    0 0 32px rgba(201,168,71,0.26),
+    0 0 64px rgba(200,122,88,0.09),
     0 0 0 1px rgba(201,168,71,0.35);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 860px) {
   .hero { gap: 18px; max-width: 100%; }
-  .hero-title { font-size: clamp(3.8rem, 16vw, 6rem); }
+  .hero-title { font-size: clamp(3.6rem, 15vw, 5.8rem); }
   .hero-sub { max-width: 100%; }
-  .hero-ctas { flex-direction: column; gap: 10px; }
-  .hero-ctas .btn { text-align: center; justify-content: center; }
 }
 
 @media (max-width: 480px) {
-  .hero-title { font-size: clamp(3.2rem, 18vw, 5rem); }
-  .hero-ctas .btn { padding: 12px 24px; font-size: 0.72rem; }
+  .hero-title { font-size: clamp(3.0rem, 18vw, 4.8rem); }
 }

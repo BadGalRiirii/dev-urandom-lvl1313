@@ -1,11 +1,53 @@
 .feed-preview {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 360px;
-  width: 100%;
+  gap: 18px;
+  width: 312px;
+  position: relative;
+  padding: 28px 22px 24px;
+  /* Art Nouveau glass panel */
+  background: rgba(9, 22, 20, 0.80);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 168, 71, 0.26);
+  /* Inset frame — double border feel */
+  box-shadow:
+    inset 0 0 0 5px rgba(201, 168, 71, 0.055),
+    0 24px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(201, 168, 71, 0.08);
 }
 
+/* Inner secondary border */
+.feed-preview::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(201, 168, 71, 0.10);
+  pointer-events: none;
+}
+
+/* Corner L-marks — top-left and bottom-right */
+.feed-preview::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  border-top: 1px solid rgba(201, 168, 71, 0.50);
+  border-left: 1px solid rgba(201, 168, 71, 0.50);
+  pointer-events: none;
+}
+
+/* Additional corner — bottom right via JS-free trick using outline offset */
+.feed-preview .feed-corner-br {
+  position: absolute;
+  bottom: 3px; right: 3px;
+  width: 18px; height: 18px;
+  border-bottom: 1px solid rgba(201, 168, 71, 0.50);
+  border-right: 1px solid rgba(201, 168, 71, 0.50);
+  pointer-events: none;
+}
+
+/* ── Header ── */
 .feed-header {
   display: flex;
   align-items: center;
@@ -14,30 +56,31 @@
 
 .feed-label {
   font-family: var(--font-sc);
-  font-size: 0.62rem;
-  letter-spacing: 0.2em;
+  font-size: 0.60rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(201, 168, 71, 0.7);
+  color: rgba(201, 168, 71, 0.75);
   white-space: nowrap;
 }
 
 .feed-header-line {
   flex: 1;
   height: 1px;
-  background: linear-gradient(to right, rgba(201, 168, 71, 0.3), transparent);
+  background: linear-gradient(to right, rgba(201, 168, 71, 0.35), transparent);
 }
 
+/* ── Feed list ── */
 .feed-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
 /* ── Skeleton loading ── */
 .feed-card-skeleton {
-  padding: 14px 16px;
-  background: rgba(21, 42, 38, 0.6);
-  border: 1px solid rgba(201, 168, 71, 0.1);
+  padding: 13px 14px;
+  background: rgba(21, 42, 38, 0.55);
+  border: 1px solid rgba(201, 168, 71, 0.08);
   border-radius: var(--radius);
   display: flex;
   flex-direction: column;
@@ -45,17 +88,17 @@
 }
 .skel-badge {
   width: 52px;
-  height: 18px;
+  height: 16px;
   border-radius: 2px;
 }
 .skel-title {
   width: 80%;
-  height: 14px;
+  height: 13px;
   border-radius: 2px;
 }
 .skel-sub {
   width: 55%;
-  height: 11px;
+  height: 10px;
   border-radius: 2px;
 }
 
@@ -63,25 +106,26 @@
 .feed-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 14px 16px;
-  background: rgba(14, 31, 28, 0.75);
-  border: 1px solid rgba(201, 168, 71, 0.14);
-  border-left: 2px solid rgba(201, 168, 71, 0.35);
+  gap: 5px;
+  padding: 13px 14px;
+  background: rgba(14, 31, 28, 0.70);
+  border: 1px solid rgba(201, 168, 71, 0.12);
+  border-left: 2px solid rgba(201, 168, 71, 0.30);
   border-radius: var(--radius);
   cursor: pointer;
   transition: var(--transition);
   position: relative;
   text-decoration: none;
-  backdrop-filter: blur(12px);
 }
 
 .feed-card:hover {
-  border-color: rgba(201, 168, 71, 0.32);
-  border-left-color: rgba(201, 168, 71, 0.75);
-  background: rgba(21, 42, 38, 0.85);
+  border-color: rgba(201, 168, 71, 0.28);
+  border-left-color: rgba(201, 168, 71, 0.72);
+  background: rgba(21, 42, 38, 0.82);
   transform: translateX(5px);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.35), 0 0 0 0 transparent;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.32),
+    inset 0 0 8px rgba(201, 168, 71, 0.025);
 }
 
 .feed-card-top {
@@ -91,15 +135,15 @@
 }
 
 .feed-card-meta {
-  font-size: 0.55rem;
-  color: rgba(240, 226, 204, 0.3);
+  font-size: 0.52rem;
+  color: rgba(240, 226, 204, 0.28);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .feed-card-title {
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-style: italic;
   font-weight: 500;
   color: var(--cream);
@@ -108,16 +152,16 @@
 }
 
 .feed-card-sub {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   color: var(--muted);
   letter-spacing: 0.06em;
 }
 
 .feed-card-arrow {
   position: absolute;
-  right: 14px;
-  bottom: 12px;
-  font-size: 0.8rem;
+  right: 13px;
+  bottom: 11px;
+  font-size: 0.78rem;
   color: var(--yellow);
   opacity: 0;
   transition: var(--transition);
@@ -125,14 +169,16 @@
 }
 
 .feed-card:hover .feed-card-arrow {
-  opacity: 0.8;
+  opacity: 0.75;
   transform: translateX(0);
 }
 
+/* ── Empty state ── */
 .feed-empty {
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  color: rgba(240, 226, 204, 0.2);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  color: rgba(240, 226, 204, 0.18);
   text-align: center;
-  padding: 24px 0;
+  padding: 22px 0;
+  font-style: italic;
 }
