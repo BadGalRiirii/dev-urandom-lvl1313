@@ -1,6 +1,6 @@
 import { fetchBooks, fetchBook, fetchTracks, fetchPosts, fetchPost } from './supabase'
 
-const BASE = ''
+const BASE = import.meta.env.VITE_API_URL || ''
 
 const authHeaders = () => {
   const token = localStorage.getItem('admin_token')
