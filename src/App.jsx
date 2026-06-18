@@ -40,7 +40,8 @@ function AppInner() {
   const location = useLocation()
   const isRead   = location.pathname.startsWith('/read')
   const isAdmin  = location.pathname.startsWith('/admin')
-  const showNav  = !isRead && !isAdmin
+  const isHome   = location.pathname === '/'
+  const showNav  = !isRead && !isAdmin && !isHome
 
   const [currentTrack,   setCurrentTrack]   = useState(null)
   const [isAudioPlaying, setIsAudioPlaying] = useState(false)

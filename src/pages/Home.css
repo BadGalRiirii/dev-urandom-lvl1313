@@ -1,119 +1,230 @@
+/* ══════════════════════════════════════════════════════════
+   Home Page
+   .home-hero-section is a rigid block. Everything inside
+   (background, flower, content) is position:absolute and
+   scrolls together as one unit with the section.
+   ══════════════════════════════════════════════════════════ */
+
 .home-page {
   position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ── Hero block: all children are absolute inside this ── */
+.home-hero-section {
+  position: relative;
+  height: 112vh;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
-/* Peony wallpaper texture — breathes behind everything */
-.home-page::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-image: url('../assets/bg-ARTNV.jpg');
-  background-size: 560px;
-  background-repeat: repeat;
-  background-position: center top;
-  opacity: 0.038;
-  mix-blend-mode: overlay;
-  pointer-events: none;
-}
-
+/* ── Atmospheric background (absolute, fills hero) ── */
 .home-scene {
   position: absolute;
   inset: 0;
   z-index: 0;
+  pointer-events: none;
 }
 
-/* Atmospheric gradient — pools of light at the scene's extremes */
 .home-gradient-floor {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 12% 52%, rgba(45, 120, 112, 0.07) 0%, transparent 50%),
-    radial-gradient(ellipse at 82% 24%, rgba(201, 168, 71, 0.055) 0%, transparent 52%),
-    radial-gradient(ellipse at 52% 85%, rgba(154, 56, 85, 0.045) 0%, transparent 48%),
-    linear-gradient(to bottom, transparent 30%, var(--bg) 100%);
+    radial-gradient(ellipse at 10% 48%, rgba(45, 120, 112, 0.14) 0%, transparent 45%),
+    radial-gradient(ellipse at 82% 18%, rgba(201, 168, 71, 0.09) 0%, transparent 48%),
+    radial-gradient(ellipse at 50% 100%, rgba(154, 56, 85, 0.18) 0%, transparent 44%),
+    linear-gradient(to bottom, transparent 8%, rgba(6, 14, 12, 0.35) 50%, rgba(6, 14, 12, 0.75) 82%, var(--bg) 100%);
 }
 
-/* ── Content layer (above scene) ── */
-.home-content {
-  position: relative;
-  z-index: 2;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 108px 68px 80px;
-  min-height: 100vh;
+/* ── Mural background — layered bloom treatment ── */
+
+@keyframes mural-breathe {
+  0%, 100% { opacity: 0.18; }
+  50%       { opacity: 0.28; }
+}
+
+.home-mural {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  /* single mask on the container — left-fade applies to all children */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0, 0, 0, 0.12) 11%,
+    rgba(0, 0, 0, 0.55) 28%,
+    black 50%,
+    black 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0, 0, 0, 0.12) 11%,
+    rgba(0, 0, 0, 0.55) 28%,
+    black 50%,
+    black 100%
+  );
+}
+
+/* Layer 1 — base: sharp detail, luminosity-blended */
+.home-mural-img {
+  position: absolute;
+  top: -12%;
+  left: 8%;
+  width: 92%;
+  height: 124%;
+  object-fit: cover;
+  object-position: center 30%;
+  opacity: 0.42;
+  mix-blend-mode: luminosity;
+  filter: contrast(1.16) brightness(1.08) saturate(1.22);
+}
+
+/* Layer 2 — bloom: same image, blurred + screen-blended so bright areas glow */
+.home-mural-bloom {
+  position: absolute;
+  top: -12%;
+  left: 8%;
+  width: 92%;
+  height: 124%;
+  object-fit: cover;
+  object-position: center 30%;
+  opacity: 0.18;
+  mix-blend-mode: screen;
+  filter: blur(20px) brightness(1.7) saturate(2.0) contrast(0.75);
+  animation: mural-breathe 9s ease-in-out infinite;
+}
+
+/* Layer 3 — corona: warm gold radial warmth in the center-right zone */
+.home-mural-corona {
+  position: absolute;
+  top: -30%;
+  left: 10%;
+  right: -30%;
+  bottom: -30%;
+  background: radial-gradient(
+    ellipse at 58% 52%,
+    rgba(201, 168, 71, 0.16) 0%,
+    rgba(190, 95, 55, 0.07) 38%,
+    transparent 65%
+  );
+  mix-blend-mode: screen;
   pointer-events: none;
 }
 
-/* ── Three-zone triptych: [hero] [spacer] [feed] ── */
+@media (max-width: 1050px) {
+  .home-mural-img   { opacity: 0.30; }
+  .home-mural-bloom { opacity: 0.12; }
+}
+
+@media (max-width: 767px) {
+  .home-mural { display: none; }
+}
+
+/* ── Content layer ── */
+.home-content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  /* No justify-content: center — auto margins on home-main handle safe centering */
+  padding: 96px 52px 68px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ── Three-zone triptych ── */
 .home-main {
   display: flex;
   align-items: center;
   width: 100%;
+  /* Safe-center: centers when space allows, starts at top when content is too tall */
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
-/* Hero text — anchored left */
 .home-hero {
   flex: 0 0 auto;
   pointer-events: all;
+  position: relative;
 }
 
-/* Atmospheric void — where the portrait presides */
 .home-spacer {
   flex: 1;
   min-width: 0;
 }
 
-/* Feed panel — anchored right */
 .home-feed {
   flex: 0 0 auto;
   pointer-events: all;
   align-self: center;
 }
 
-/* ── Ticker strip ── */
+/* ── Ticker ── */
 .home-ticker {
   position: relative;
   z-index: 2;
   width: 100%;
+  background: var(--bg);
+  flex-shrink: 0;
+  padding-bottom: 6px;
 }
 
-/* ── Art Nouveau SVG frame overlay ── */
-.artnv-overlay {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
+/* ─── Desktop responsive ─── */
+@media (max-width: 1200px) {
+  .home-content { padding: 96px 40px 60px; }
 }
 
-/* ─── Responsive ─── */
-@media (max-width: 1100px) {
-  .home-content {
-    padding: 100px 48px 72px;
-  }
-}
-
-@media (max-width: 860px) {
-  .home-content {
-    padding: 90px 24px 60px;
-    min-height: 100dvh;
-  }
+/* ≤1050px: column layout — triptych can't fit below this width */
+@media (max-width: 1050px) {
+  .home-content { padding: 90px 28px 56px; }
   .home-main {
     flex-direction: column;
     align-items: flex-start;
-    gap: 48px;
+    gap: 32px;
+  }
+  .home-spacer {
+    width: 100%;
+    min-width: 0;
+    min-height: 200px;
+  }
+}
+
+/* ─── Short viewports ─── */
+@media (max-height: 780px) {
+  .home-content { padding: 80px 52px 90px; }
+}
+@media (max-height: 680px) {
+  .home-content { padding: 70px 52px 70px; }
+}
+
+/* ─── Mobile — hero expands to fit content ─── */
+@media (max-width: 767px) {
+  .home-hero-section {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  /* Scene stays absolute — fills the auto-height hero section */
+  .home-scene {
+    position: absolute;
+    min-height: 100dvh;
+  }
+  .home-content {
+    position: relative;
+    overflow: visible;
+    min-height: 100dvh;
+    flex: none;
   }
   .home-spacer { display: none; }
 }
 
 @media (max-width: 480px) {
-  .home-content { padding: 80px 16px 48px; }
+  .home-content { padding: 80px 16px 44px; }
 }

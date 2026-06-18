@@ -3,6 +3,8 @@
   flex-direction: column;
   gap: 20px;
   max-width: 540px;
+  position: relative;
+  z-index: 1; /* sit above the background HeroBooks */
 }
 
 .hero-chapter-stamp {
@@ -32,7 +34,7 @@
 
 /* The massive italic display title */
 .hero-title {
-  font-size: clamp(4.8rem, 9.5vw, 9.2rem);
+  font-size: clamp(3.6rem, 7vw, 6.8rem);
   line-height: 0.87;
   letter-spacing: -0.012em;
   color: var(--cream);
@@ -43,6 +45,45 @@
   text-shadow:
     0 0 60px rgba(201, 168, 71, 0.18),
     0 0 120px rgba(201, 168, 71, 0.07);
+}
+
+/* ── Title → subtitle ornamental rule ── */
+.hero-title-rule {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: -6px;
+  margin-bottom: -6px;
+}
+
+.htr-line {
+  height: 1px;
+  width: 28px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(201, 168, 71, 0.50)
+  );
+  flex-shrink: 0;
+}
+
+.htr-line--long {
+  width: 72px;
+  background: linear-gradient(
+    to right,
+    rgba(201, 168, 71, 0.44),
+    rgba(201, 168, 71, 0.12),
+    transparent
+  );
+}
+
+.htr-glyph {
+  font-size: 0.82rem;
+  color: rgba(201, 168, 71, 0.58);
+  line-height: 1;
+  flex-shrink: 0;
+  position: relative;
+  top: 0.5px;
 }
 
 .hero-sub {
@@ -80,6 +121,7 @@
   filter: brightness(0.80) saturate(0.86);
   transition: filter 0.48s ease, transform 0.48s ease;
   transform: translateY(0px);
+  pointer-events: auto;
 }
 .fruit-card:hover {
   filter: brightness(0.96) saturate(1.0);
@@ -208,4 +250,17 @@
 
 @media (max-width: 480px) {
   .hero-title { font-size: clamp(3.0rem, 18vw, 4.8rem); }
+}
+
+/* Compact mode for short laptop screens */
+@media (max-height: 780px) {
+  .hero { gap: 14px; }
+  .hero-title { font-size: clamp(3.0rem, 5.2vw, 5rem); }
+}
+
+@media (max-height: 680px) {
+  .hero { gap: 10px; }
+  .hero-title { font-size: clamp(2.6rem, 4.6vw, 4.4rem); }
+  .hero-ornament { display: none; }
+  .fruit-card-wrap { display: none; }
 }

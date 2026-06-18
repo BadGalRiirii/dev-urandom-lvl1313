@@ -1,0 +1,199 @@
+/* ══════════════════════════════════════════════════════
+   CollectionShelf — three Art Nouveau illustrated items
+   Book covers + vinyl, each linking to a section.
+   ══════════════════════════════════════════════════════ */
+
+.cshelf {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* ── Shared item shell ── */
+.cshelf-item {
+  position: relative;
+  display: block;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  overflow: hidden;
+  outline: none;
+}
+
+/* ── Book covers ── */
+.cshelf-book {
+  width: 76px;
+  height: 114px;
+  border-radius: 1px 2px 2px 1px;
+
+  /* Drop shadow + page-edge illusion on right */
+  box-shadow:
+    4px 4px 18px rgba(0, 0, 0, 0.70),
+    -2px 0  0   rgba(201, 168, 71, 0.10),
+     1px 0  0   rgba(255, 255, 255, 0.04);
+
+  transition: transform 0.50s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.50s cubic-bezier(0.22, 1, 0.36, 1),
+              filter     0.50s ease;
+
+  /* start slightly different heights for a "leaning stack" feel */
+  filter: brightness(0.80) saturate(0.82);
+}
+.cshelf-book:first-child { transform: rotate(-2.2deg) translateY(4px); }
+.cshelf-book:nth-child(2) { transform: rotate(0.8deg) translateY(0px); }
+
+.cshelf-book:hover {
+  transform: rotate(0deg) translateY(-8px) !important;
+  filter: brightness(1.0) saturate(1.0);
+  box-shadow:
+    6px 10px 32px rgba(0, 0, 0, 0.72),
+    0   0   22px rgba(201, 168, 71, 0.20),
+    -2px 0  0   rgba(201, 168, 71, 0.18);
+}
+
+/* ── Vinyl disc ── */
+.cshelf-vinyl {
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  align-self: center;
+
+  box-shadow:
+    0 6px 22px rgba(0, 0, 0, 0.70),
+    0 0  0    3px rgba(201, 168, 71, 0.22);
+
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.50s ease,
+              filter     0.50s ease;
+
+  filter: brightness(0.76) saturate(0.80);
+}
+.cshelf-vinyl:hover {
+  transform: rotate(20deg) scale(1.07);
+  filter: brightness(1.0) saturate(1.0);
+  box-shadow:
+    0  8px 28px rgba(0, 0, 0, 0.72),
+    0  0   22px rgba(201, 168, 71, 0.24),
+    0  0   0    3px rgba(201, 168, 71, 0.50);
+}
+
+/* ── Cover image ── */
+.cshelf-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── Inner Art Nouveau double-frame ── */
+.cshelf-frame {
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(201, 168, 71, 0.20);
+  pointer-events: none;
+}
+.cshelf-frame::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(201, 168, 71, 0.09);
+}
+
+/* ── Left spine strip (books only) ── */
+.cshelf-spine {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 5px;
+  background: linear-gradient(to right,
+    rgba(0, 0, 0, 0.58) 0%,
+    rgba(0, 0, 0, 0.20) 60%,
+    transparent 100%
+  );
+  border-right: 1px solid rgba(201, 168, 71, 0.28);
+  pointer-events: none;
+}
+
+/* ── Bottom label panel ── */
+.cshelf-label-panel {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 8px 8px 9px;
+  background: linear-gradient(to top,
+    rgba(4, 11, 9, 0.95) 0%,
+    rgba(6, 16, 14, 0.82) 55%,
+    transparent 100%
+  );
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+.cshelf-num {
+  font-family: var(--font-mono);
+  font-size: 0.30rem;
+  letter-spacing: 0.32em;
+  color: rgba(201, 168, 71, 0.38);
+  line-height: 1;
+}
+
+.cshelf-name {
+  font-family: var(--font-sc);
+  font-size: 0.54rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 71, 0.88);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.cshelf-sub {
+  font-family: var(--font-mono);
+  font-size: 0.28rem;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(240, 226, 204, 0.28);
+  line-height: 1;
+}
+
+/* ── Corner pip ornament ── */
+.cshelf-pip {
+  position: absolute;
+  top: 7px; right: 7px;
+  font-size: 0.28rem;
+  color: rgba(201, 168, 71, 0.30);
+  line-height: 1;
+  pointer-events: none;
+  transition: color 0.50s ease, transform 0.50s ease;
+}
+.cshelf-item:hover .cshelf-pip {
+  color: rgba(201, 168, 71, 0.80);
+  transform: scale(1.4) rotate(45deg);
+}
+
+/* Hover reveals brighter frame */
+.cshelf-item:hover .cshelf-frame {
+  border-color: rgba(201, 168, 71, 0.42);
+}
+.cshelf-item:hover .cshelf-name {
+  color: rgba(201, 168, 71, 1.0);
+}
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .cshelf-book  { width: 66px; height: 98px; }
+  .cshelf-vinyl { width: 74px; height: 74px; }
+  .cshelf { gap: 8px; }
+}
+
+@media (max-height: 680px) {
+  .cshelf { display: none; }
+}

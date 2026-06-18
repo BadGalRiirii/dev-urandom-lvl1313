@@ -1,0 +1,419 @@
+/* ═══════════════════════════════════════════════════════
+   ModelNav — absolute within .home-hero-section
+   Scrolls with the page as part of the hero block.
+   ═══════════════════════════════════════════════════════ */
+
+.model-nav-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* No z-index — lets children participate directly in hero stacking context
+     so canvas (z:1) sits below home-content (z:2) and nav labels (z:6) sit above */
+}
+
+/* ── Halo ──────────────────────────────────────────────── */
+.model-nav-halo {
+  position: absolute;
+  top: 52%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 76vmin; height: 76vmin;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(154, 56, 85, 0.18)  0%,
+    rgba(201, 168, 71, 0.05) 40%,
+    rgba(45, 120, 112, 0.03) 62%,
+    transparent              78%
+  );
+  animation: halo-breathe 9s ease-in-out infinite alternate;
+}
+
+@keyframes halo-breathe {
+  from { opacity: 0.50; transform: translate(-50%, -50%) scale(0.92); }
+  to   { opacity: 1.00; transform: translate(-50%, -50%) scale(1.10); }
+}
+
+/* ── Full-bleed canvas ────────────────────────────────── */
+.model-canvas-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  /* z-index: 1 puts canvas BELOW home-content (z:2). Events in the center/flower
+     area fall through home-content (pointer-events:none) to the canvas here,
+     so orbit-drag works. home-hero and home-feed (pointer-events:all at z:2)
+     intercept events in their own areas first. */
+}
+
+.model-canvas-bg > div,
+.model-canvas-bg canvas {
+  width: 100%  !important;
+  height: 100% !important;
+  background: transparent !important;
+  display: block;
+}
+
+/* Gradient mask — fades the lower stem into the page bg */
+.model-bottom-fade {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 30%;
+  background: linear-gradient(to bottom, transparent 0%, var(--bg) 100%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ── Dashed crosshair ─────────────────────────────────── */
+.mnav-line-v,
+.mnav-line-h {
+  position: absolute;
+  pointer-events: none;
+  z-index: 2;
+}
+.mnav-line-v {
+  left: 50%; top: 0; bottom: 0;
+  width: 1px; margin-left: -0.5px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(201, 168, 71, 0.09) 0px, rgba(201, 168, 71, 0.09) 2px,
+    transparent 2px, transparent 12px
+  );
+}
+.mnav-line-h {
+  top: 50%; left: 0; right: 0;
+  height: 1px; margin-top: -0.5px;
+  background: repeating-linear-gradient(
+    to right,
+    rgba(201, 168, 71, 0.09) 0px, rgba(201, 168, 71, 0.09) 2px,
+    transparent 2px, transparent 12px
+  );
+}
+
+/* ── Center reticle ───────────────────────────────────── */
+.mnav-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(201, 168, 71, 0.20);
+  box-shadow: 0 0 0 6px rgba(201, 168, 71, 0.04);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ── Corner L-brackets ────────────────────────────────── */
+.mnav-corner {
+  position: absolute;
+  width: 28px; height: 28px;
+  pointer-events: none;
+  z-index: 2;
+}
+.mnav-corner.tl { top: 18px; left: 18px;
+  border-top: 1px solid rgba(201, 168, 71, 0.18);
+  border-left: 1px solid rgba(201, 168, 71, 0.18); }
+.mnav-corner.tr { top: 18px; right: 18px;
+  border-top: 1px solid rgba(201, 168, 71, 0.18);
+  border-right: 1px solid rgba(201, 168, 71, 0.18); }
+.mnav-corner.bl { bottom: 18px; left: 18px;
+  border-bottom: 1px solid rgba(201, 168, 71, 0.18);
+  border-left: 1px solid rgba(201, 168, 71, 0.18); }
+.mnav-corner.br { bottom: 18px; right: 18px;
+  border-bottom: 1px solid rgba(201, 168, 71, 0.18);
+  border-right: 1px solid rgba(201, 168, 71, 0.18); }
+
+/* ── Nav labels layer ─────────────────────────────────── */
+.model-nav-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  /* z-index: 6 — above home-content (z:2) and model-bottom-fade (z:5) */
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAV PILL — museum plaque · warm gold · layered depth
+   Layout: pill-top (rules + pip) / label / pill-bot (rule + num)
+   ═══════════════════════════════════════════════════════ */
+.mnav-pill {
+  position: absolute;
+  pointer-events: all;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  min-width: 152px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: visible;
+
+  /* Warm dot-grid texture over deep dark */
+  background:
+    radial-gradient(circle, rgba(201, 168, 71, 0.040) 1px, transparent 0) 0 0 / 9px 9px,
+    rgba(5, 10, 8, 0.92);
+
+  border-top:    2px solid rgba(201, 168, 71, 0.62);
+  border-right:  1px solid rgba(201, 168, 71, 0.24);
+  border-bottom: 1px solid rgba(201, 168, 71, 0.24);
+  border-left:   1px solid rgba(201, 168, 71, 0.24);
+  border-radius: 0;
+
+  box-shadow:
+    0 8px 44px rgba(0, 0, 0, 0.74),
+    0 2px 12px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(201, 168, 71, 0.10);
+  backdrop-filter: blur(14px) saturate(1.12);
+  -webkit-backdrop-filter: blur(14px) saturate(1.12);
+
+  transition:
+    border-color 0.52s ease,
+    box-shadow   0.56s ease;
+  animation: mnav-fade 1.0s ease-out both;
+}
+
+/* ── Top row: pip flanked by gold rules ── */
+.mnav-pill-top {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 11px 14px 0;
+  gap: 8px;
+}
+.mnav-pill-top::before,
+.mnav-pill-top::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(201, 168, 71, 0.22);
+  transition: background-color 0.30s ease;
+}
+
+.mnav-pip {
+  font-size: 0.38rem;
+  color: rgba(201, 168, 71, 0.40);
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.30s ease, transform 0.36s ease;
+}
+
+/* ── Label ── */
+.mnav-label {
+  font-family: var(--font-sc);
+  font-size: 0.70rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 71, 0.78);
+  line-height: 1;
+  padding: 9px 22px 0;
+  transition: color 0.30s ease;
+}
+
+/* ── Bottom row: leading rule + roman numeral ── */
+.mnav-pill-bot {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 14px 11px;
+  gap: 9px;
+}
+.mnav-pill-bot::before {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(201, 168, 71, 0.14);
+  transition: background-color 0.30s ease;
+}
+
+.mnav-num {
+  font-family: var(--font-mono);
+  font-size: 0.34rem;
+  letter-spacing: 0.34em;
+  color: rgba(201, 168, 71, 0.26);
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.30s ease;
+}
+
+/* ── Hover / Active — warm slow brightening, no mechanical effects ── */
+.mnav-pill:hover,
+.mnav-pill.active {
+  border-top-color:    rgba(201, 168, 71, 0.94);
+  border-right-color:  rgba(201, 168, 71, 0.38);
+  border-bottom-color: rgba(201, 168, 71, 0.38);
+  border-left-color:   rgba(201, 168, 71, 0.38);
+  box-shadow:
+    0 0 44px rgba(201, 168, 71, 0.13),
+    0 0 88px rgba(201, 168, 71, 0.05),
+    0 14px 52px rgba(0, 0, 0, 0.82),
+    inset 0 1px 0 rgba(201, 168, 71, 0.16);
+}
+.mnav-pill:hover .mnav-pip,
+.mnav-pill.active .mnav-pip {
+  color: rgba(201, 168, 71, 0.90);
+}
+.mnav-pill:hover .mnav-pill-top::before,
+.mnav-pill:hover .mnav-pill-top::after,
+.mnav-pill.active .mnav-pill-top::before,
+.mnav-pill.active .mnav-pill-top::after {
+  background: rgba(201, 168, 71, 0.38);
+}
+.mnav-pill:hover .mnav-label,
+.mnav-pill.active .mnav-label { color: rgba(201, 168, 71, 1.0); }
+.mnav-pill:hover .mnav-num,
+.mnav-pill.active .mnav-num   { color: rgba(201, 168, 71, 0.56); }
+
+/* Staggered reveal */
+.pos-0 { animation-delay: 0.3s; }
+.pos-1 { animation-delay: 0.5s; }
+.pos-2 { animation-delay: 0.7s; }
+.pos-3 { animation-delay: 0.9s; }
+
+@keyframes mnav-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   COMPASS POSITIONS + SPECIMEN STEMS
+   Stems are hairline gradients pointing inward — the
+   botanical callout-line connecting label to subject.
+   ═══════════════════════════════════════════════════════ */
+
+/* Home — top center */
+.pos-0 {
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.pos-0::before {
+  content: '';
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-0.5px);
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(to bottom, rgba(201, 168, 71, 0.32), transparent);
+  pointer-events: none;
+}
+
+/* Library — 220px left of viewport center, stem points right toward flower */
+.pos-1 {
+  top: 52%;
+  right: calc(50% + 220px);
+  transform: translateY(-50%);
+}
+.pos-1::before {
+  content: '';
+  position: absolute;
+  left: calc(100% + 1px);
+  top: 50%;
+  transform: translateY(-0.5px);
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(to right, rgba(201, 168, 71, 0.32), transparent);
+  pointer-events: none;
+}
+
+/* Journal — 220px right of viewport center, stem points left toward flower */
+.pos-2 {
+  top: 52%;
+  left: calc(50% + 220px);
+  transform: translateY(-50%);
+}
+.pos-2::before {
+  content: '';
+  position: absolute;
+  right: calc(100% + 1px);
+  top: 50%;
+  transform: translateY(-0.5px);
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(to left, rgba(201, 168, 71, 0.32), transparent);
+  pointer-events: none;
+}
+
+/* Music — above MusicPlayerBar (76px) with breathing room */
+.pos-3 {
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.pos-3::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-0.5px);
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(to top, rgba(201, 168, 71, 0.32), transparent);
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════ */
+
+@media (max-width: 1200px) {
+  .pos-1 { right: calc(50% + 170px); }
+  .pos-2 { left:  calc(50% + 170px); }
+  .pos-1::before, .pos-2::before { width: 90px; }
+}
+
+@media (max-width: 1023px) {
+  .mnav-pill  { min-width: 134px; }
+  .mnav-label { font-size: 0.64rem; }
+}
+
+/* Column layout ≤1050px: side buttons hug edges, stems point inward */
+@media (max-width: 1050px) {
+  .pos-1 {
+    top: 56%; left: 16px; right: auto;
+    transform: translateY(-50%);
+  }
+  .pos-1::before {
+    left: calc(100% + 1px); right: auto;
+    background: linear-gradient(to right, rgba(201, 168, 71, 0.22), transparent);
+  }
+  .pos-2 {
+    top: 56%; right: 16px; left: auto;
+    transform: translateY(-50%);
+  }
+  .pos-2::before {
+    right: calc(100% + 1px); left: auto;
+    background: linear-gradient(to left, rgba(201, 168, 71, 0.22), transparent);
+  }
+}
+
+@media (max-width: 767px) {
+  .mnav-pill     { min-width: 108px; }
+  .mnav-label    { font-size: 0.58rem; letter-spacing: 0.18em; padding: 7px 14px 0; }
+  .mnav-pill-top { padding: 9px 12px 0; }
+  .mnav-pill-bot { padding: 5px 12px 9px; }
+  .mnav-num      { display: none; }
+
+  /* hide stems — too cramped at mobile */
+  .pos-0::before, .pos-1::before,
+  .pos-2::before, .pos-3::before { display: none; }
+
+  .pos-0 { top: 8%; }
+  .pos-1 { top: 50%; left: 14px; right: auto; transform: translateY(-50%); }
+  .pos-2 { top: 50%; right: 14px; left: auto; transform: translateY(-50%); }
+  .pos-3 { bottom: 86px; }
+
+  .mnav-corner { width: 22px; height: 22px; }
+  .mnav-corner.tl, .mnav-corner.tr { top: 14px; }
+  .mnav-corner.tl, .mnav-corner.bl { left: 14px; }
+  .mnav-corner.tr, .mnav-corner.br { right: 14px; }
+  .mnav-corner.bl, .mnav-corner.br { bottom: 14px; }
+}
+
+@media (max-width: 479px) {
+  .mnav-pill  { min-width: 90px; }
+  .mnav-label { font-size: 0.52rem; letter-spacing: 0.14em; }
+  .pos-1 { left: 10px; }
+  .pos-2 { right: 10px; }
+  .pos-3 { bottom: 84px; }
+}

@@ -32,12 +32,18 @@ export default function HeroText() {
         Loved
       </motion.h1>
 
+      <motion.div variants={item} className="hero-title-rule">
+        <span className="htr-line" />
+        <span className="htr-glyph">❧</span>
+        <span className="htr-line htr-line--long" />
+      </motion.div>
+
       <motion.p className="hero-sub" variants={item}>
         a personal archive of obsessions — books, films, sounds, &amp; half-finished thoughts
       </motion.p>
 
       <motion.div variants={item} className="fruit-card-wrap">
-        <button className="fruit-card" disabled title="Coming soon — hand tracking game">
+        <button className="fruit-card" aria-disabled="true" tabIndex={-1} title="Coming soon — hand tracking game">
           <img src={artnoImg} alt="" className="fruit-card-img" draggable={false} />
 
           {/* inner gold rule frame */}
