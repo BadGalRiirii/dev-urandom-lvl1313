@@ -16,7 +16,8 @@
 /* ── Hero block: all children are absolute inside this ── */
 .home-hero-section {
   position: relative;
-  height: 112vh;
+  height: 130vh;
+  min-height: 900px;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -42,8 +43,8 @@
 /* ── Mural background — layered bloom treatment ── */
 
 @keyframes mural-breathe {
-  0%, 100% { opacity: 0.18; }
-  50%       { opacity: 0.28; }
+  0%, 100% { opacity: 0.20; }
+  50%       { opacity: 0.36; }
 }
 
 .home-mural {
@@ -52,26 +53,26 @@
   pointer-events: none;
   overflow: hidden;
   z-index: 0;
-  /* single mask on the container — left-fade applies to all children */
+  /* left-fade so mural doesn't fight the hero text */
   mask-image: linear-gradient(
     to right,
     transparent 0%,
-    rgba(0, 0, 0, 0.12) 11%,
-    rgba(0, 0, 0, 0.55) 28%,
-    black 50%,
+    rgba(0, 0, 0, 0.08) 8%,
+    rgba(0, 0, 0, 0.50) 22%,
+    black 40%,
     black 100%
   );
   -webkit-mask-image: linear-gradient(
     to right,
     transparent 0%,
-    rgba(0, 0, 0, 0.12) 11%,
-    rgba(0, 0, 0, 0.55) 28%,
-    black 50%,
+    rgba(0, 0, 0, 0.08) 8%,
+    rgba(0, 0, 0, 0.50) 22%,
+    black 40%,
     black 100%
   );
 }
 
-/* Layer 1 — base: sharp detail, luminosity-blended */
+/* Layer 1 — base: full colour at moderate opacity */
 .home-mural-img {
   position: absolute;
   top: -12%;
@@ -80,12 +81,12 @@
   height: 124%;
   object-fit: cover;
   object-position: center 30%;
-  opacity: 0.42;
-  mix-blend-mode: luminosity;
-  filter: contrast(1.16) brightness(1.08) saturate(1.22);
+  opacity: 0.52;
+  mix-blend-mode: normal; /* was luminosity — now shows actual colour */
+  filter: contrast(1.05) brightness(0.82) saturate(1.18);
 }
 
-/* Layer 2 — bloom: same image, blurred + screen-blended so bright areas glow */
+/* Layer 2 — bloom: blurred screen layer so bright areas (stained glass, neon, doves) glow */
 .home-mural-bloom {
   position: absolute;
   top: -12%;
@@ -94,13 +95,13 @@
   height: 124%;
   object-fit: cover;
   object-position: center 30%;
-  opacity: 0.18;
+  opacity: 0.20;
   mix-blend-mode: screen;
-  filter: blur(20px) brightness(1.7) saturate(2.0) contrast(0.75);
+  filter: blur(28px) brightness(2.2) saturate(2.8) contrast(0.65);
   animation: mural-breathe 9s ease-in-out infinite;
 }
 
-/* Layer 3 — corona: warm gold radial warmth in the center-right zone */
+/* Layer 3 — corona: warm radial wash that pulls the mural into the page palette */
 .home-mural-corona {
   position: absolute;
   top: -30%;
@@ -108,18 +109,19 @@
   right: -30%;
   bottom: -30%;
   background: radial-gradient(
-    ellipse at 58% 52%,
-    rgba(201, 168, 71, 0.16) 0%,
-    rgba(190, 95, 55, 0.07) 38%,
-    transparent 65%
+    ellipse at 62% 50%,
+    rgba(201, 168, 71, 0.12) 0%,
+    rgba(88, 190, 180, 0.06) 32%,
+    rgba(190, 95, 55, 0.05) 52%,
+    transparent 68%
   );
   mix-blend-mode: screen;
   pointer-events: none;
 }
 
 @media (max-width: 1050px) {
-  .home-mural-img   { opacity: 0.30; }
-  .home-mural-bloom { opacity: 0.12; }
+  .home-mural-img   { opacity: 0.38; }
+  .home-mural-bloom { opacity: 0.15; }
 }
 
 @media (max-width: 767px) {
@@ -134,8 +136,8 @@
   display: flex;
   flex-direction: column;
   /* No justify-content: center — auto margins on home-main handle safe centering */
-  padding: 96px 52px 68px;
-  overflow: hidden;
+  padding: 96px 52px 120px;
+  overflow: visible;
   pointer-events: none;
 }
 
@@ -166,6 +168,43 @@
   align-self: center;
 }
 
+/* ── Mural corner credit ── */
+.home-credit {
+  position: absolute;
+  bottom: 20px;
+  right: 28px;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  pointer-events: none;
+}
+.home-credit-label {
+  font-family: var(--font-sc);
+  font-size: 0.42rem;
+  letter-spacing: 0.30em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 71, 0.48);
+  border-right: 1px solid rgba(201, 168, 71, 0.18);
+  padding-right: 9px;
+  flex-shrink: 0;
+}
+.home-credit-text {
+  font-family: var(--font-mono);
+  font-size: 0.46rem;
+  letter-spacing: 0.10em;
+  color: rgba(240, 226, 204, 0.20);
+  line-height: 1.5;
+}
+.home-credit-text em {
+  font-style: italic;
+  color: rgba(240, 226, 204, 0.30);
+}
+
+@media (max-width: 767px) {
+  .home-credit { display: none; }
+}
+
 /* ── Ticker ── */
 .home-ticker {
   position: relative;
@@ -178,40 +217,17 @@
 
 /* ─── Desktop responsive ─── */
 @media (max-width: 1200px) {
-  .home-content { padding: 96px 40px 60px; }
+  .home-content { padding: 96px 40px 100px; }
 }
 
-/* ≤1050px: column layout — triptych can't fit below this width */
+/* ≤1050px: column layout — triptych can't fit below this width.
+   Switch to auto-height so stacked content dictates the section size. */
 @media (max-width: 1050px) {
-  .home-content { padding: 90px 28px 56px; }
-  .home-main {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 32px;
-  }
-  .home-spacer {
-    width: 100%;
-    min-width: 0;
-    min-height: 200px;
-  }
-}
-
-/* ─── Short viewports ─── */
-@media (max-height: 780px) {
-  .home-content { padding: 80px 52px 90px; }
-}
-@media (max-height: 680px) {
-  .home-content { padding: 70px 52px 70px; }
-}
-
-/* ─── Mobile — hero expands to fit content ─── */
-@media (max-width: 767px) {
   .home-hero-section {
     height: auto;
     min-height: 100dvh;
     overflow: visible;
   }
-  /* Scene stays absolute — fills the auto-height hero section */
   .home-scene {
     position: absolute;
     min-height: 100dvh;
@@ -221,10 +237,36 @@
     overflow: visible;
     min-height: 100dvh;
     flex: none;
+    padding: 90px 28px 80px;
   }
+  .home-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 28px;
+  }
+  .home-spacer {
+    width: 100%;
+    min-width: 0;
+    min-height: 100px;
+  }
+}
+
+/* ─── Short viewports (laptop screens) ─── */
+@media (max-height: 780px) {
+  .home-hero-section { min-height: 860px; }
+  .home-content { padding: 80px 52px 100px; }
+}
+@media (max-height: 680px) {
+  .home-hero-section { min-height: 800px; }
+  .home-content { padding: 70px 52px 90px; }
+}
+
+/* ─── Mobile — already handled by ≤1050px auto-height above ─── */
+@media (max-width: 767px) {
   .home-spacer { display: none; }
+  .home-content { padding: 80px 24px 72px; }
 }
 
 @media (max-width: 480px) {
-  .home-content { padding: 80px 16px 44px; }
+  .home-content { padding: 80px 16px 60px; }
 }

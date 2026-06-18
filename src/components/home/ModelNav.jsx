@@ -112,7 +112,7 @@ export default function ModelNav() {
           <button
             key={to}
             className={`mnav-pill pos-${i}${location.pathname === to ? ' active' : ''}`}
-            onClick={() => navigate(to)}
+            onClick={() => location.pathname === to ? window.location.reload() : navigate(to)}
           >
             <span className="mnav-pill-top" aria-hidden="true">
               <span className="mnav-pip">✦</span>

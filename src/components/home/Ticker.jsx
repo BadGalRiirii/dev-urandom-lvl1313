@@ -10,6 +10,9 @@ const DEFAULT_ITEMS = [
   'Books · Films · Music · Words',
   'Chapter 01',
   'The Archive is Open',
+  'Arcane © Riot Games / Fortiche',
+  'Art Nouveau · Fan Illustrations',
+  'Caitlyn · Jinx · Piltover & Zaun',
 ]
 
 export default function Ticker({ items = DEFAULT_ITEMS }) {
