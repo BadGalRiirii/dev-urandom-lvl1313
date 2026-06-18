@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
 import ChapterCard from '../ui/ChapterCard'
 import artnoImg from '../../assets/ARTNO.jpg'
+import cait2Img from '../../assets/cait2.jpg'
+import jinxImg  from '../../assets/jinx.jpg'
 import './HeroText.css'
 
 const container = {
@@ -42,23 +44,49 @@ export default function HeroText() {
         a personal archive of obsessions — books, films, sounds, &amp; half-finished thoughts
       </motion.p>
 
-      <motion.div variants={item} className="fruit-card-wrap">
-        <button className="fruit-card" aria-disabled="true" tabIndex={-1} title="Coming soon — hand tracking game">
-          <img src={artnoImg} alt="" className="fruit-card-img" draggable={false} />
+      <motion.div variants={item} className="hero-deck">
 
-          {/* inner gold rule frame */}
-          <div className="fruit-card-frame" />
-
-          {/* bottom label panel */}
-          <div className="fruit-card-label">
-            <span className="fruit-card-ornament">✦ ✦ ✦</span>
-            <span className="fruit-card-title">Game Mode</span>
-            <span className="fruit-card-sub">coming soon</span>
+        {/* Back — Game Mode */}
+        <button className="deck-card deck-game" aria-disabled="true" tabIndex={-1}>
+          <img src={artnoImg} alt="" className="deck-img" draggable={false} />
+          <div className="deck-frame" />
+          <div className="deck-label">
+            <span className="deck-ornament">✦ ✦ ✦</span>
+            <span className="deck-title">Game Mode</span>
+            <span className="deck-sub">coming soon</span>
           </div>
-
-          {/* hover glow corona */}
-          <div className="fruit-card-corona" />
+          <div className="deck-corona" />
         </button>
+
+        {/* Middle — Jinx */}
+        <button className="deck-card deck-jinx" aria-disabled="true" tabIndex={-1}>
+          <img src={jinxImg} alt="" className="deck-img" draggable={false} />
+          <div className="deck-frame" />
+          <div className="deck-label">
+            <span className="deck-ornament">✦ ✦ ✦</span>
+            <span className="deck-title">Chapter II</span>
+            <span className="deck-sub">coming soon</span>
+          </div>
+          <div className="deck-corona" />
+        </button>
+
+        {/* Front — Portfolio */}
+        <a
+          href="https://badgalriirii.github.io/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="deck-card deck-portfolio"
+        >
+          <img src={cait2Img} alt="Portfolio" className="deck-img" draggable={false} />
+          <div className="deck-frame" />
+          <div className="deck-label">
+            <span className="deck-ornament">✦ ✦ ✦</span>
+            <span className="deck-title">Portfolio</span>
+            <span className="deck-sub">view work →</span>
+          </div>
+          <div className="deck-corona" />
+        </a>
+
       </motion.div>
 
     </motion.div>

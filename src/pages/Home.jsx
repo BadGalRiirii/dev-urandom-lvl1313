@@ -26,6 +26,14 @@ export default function Home() {
 
         <ModelNav />
 
+        {/* ── Corner image credit ── */}
+        <div className="home-credit" aria-label="Image credits">
+          <span className="home-credit-label">Art</span>
+          <span className="home-credit-text">
+            Mural &amp; cards — <em>Arcane</em> © Riot Games / Fortiche Productions
+          </span>
+        </div>
+
         <motion.div
           className="home-content"
           initial={{ opacity: 0 }}

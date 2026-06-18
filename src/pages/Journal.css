@@ -1,4 +1,37 @@
+/* ── Fixed wisteria background ── */
+.journal-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.journal-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  display: block;
+  filter: saturate(1.28) brightness(1.04) contrast(1.06);
+}
+
+.journal-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    /* whisper of darkness only at the very bottom for content readability */
+    linear-gradient(to bottom,
+      transparent 0%,
+      transparent 60%,
+      rgba(6, 14, 12, 0.30) 82%,
+      rgba(6, 14, 12, 0.60) 100%
+    );
+}
+
+/* ── Page content — above bg and petals ── */
 .journal-page {
+  position: relative;
+  z-index: 3;
   padding: 100px 40px 60px;
   min-height: 100vh;
   max-width: 1100px;
@@ -16,28 +49,98 @@
 
 .journal-eyebrow {
   font-size: 0.65rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.20em;
   text-transform: uppercase;
-  color: var(--yellow);
+  color: #d4aa48;
+  margin-bottom: 6px;
+  text-shadow:
+    0 0 6px  rgba(4, 10, 8, 1.0),
+    0 0 16px rgba(4, 10, 8, 0.95),
+    0 0 36px rgba(4, 10, 8, 0.80);
+}
+
+/* Ornamental rule between eyebrow and title */
+.journal-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
+}
+.jr-line {
+  height: 1px;
+  width: 22px;
+  background: linear-gradient(to right, transparent, rgba(201, 168, 71, 0.55));
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(4, 10, 8, 0.9));
+}
+.jr-line--long {
+  width: 60px;
+  background: linear-gradient(to right, rgba(201, 168, 71, 0.50), rgba(201, 168, 71, 0.12), transparent);
+}
+.jr-glyph {
+  font-size: 0.55rem;
+  color: rgba(201, 168, 71, 0.70);
+  line-height: 1;
+  flex-shrink: 0;
+  text-shadow:
+    0 0 6px  rgba(4, 10, 8, 1.0),
+    0 0 18px rgba(4, 10, 8, 0.90);
 }
 
 .journal-title {
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  color: var(--cream);
-  margin-bottom: 4px;
+  font-size: clamp(2.5rem, 5vw, 4.2rem);
+  /* warm gilded cream — reads as gold-tinged ivory */
+  color: #f5e6c4;
+  margin-bottom: 6px;
+  text-shadow:
+    /* tight 4-directional halo — crisp letter edges */
+     1px  0   2px rgba(4, 10, 8, 1.0),
+    -1px  0   2px rgba(4, 10, 8, 1.0),
+     0    1px 2px rgba(4, 10, 8, 1.0),
+     0   -1px 2px rgba(4, 10, 8, 1.0),
+    /* mid spread — pushes the background away */
+    0 0 10px rgba(4, 10, 8, 0.98),
+    0 0 24px rgba(4, 10, 8, 0.92),
+    /* wide atmospheric — the "ink soaking in" */
+    0 0 52px rgba(4, 10, 8, 0.72),
+    0 0 90px rgba(4, 10, 8, 0.45);
 }
 
 .journal-sub {
   font-style: italic;
-  color: var(--muted);
+  color: rgba(240, 226, 204, 0.82);
   font-size: 1rem;
+  letter-spacing: 0.02em;
+  text-shadow:
+    0 1px 3px  rgba(4, 10, 8, 1.0),
+    0 0  14px  rgba(4, 10, 8, 0.97),
+    0 0  32px  rgba(4, 10, 8, 0.82),
+    0 0  60px  rgba(4, 10, 8, 0.55);
 }
 
 .journal-filters {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* Pills need a frosted dark base to read against the bright wisteria sky */
+.journal-filters .pill {
+  background: rgba(6, 14, 12, 0.52);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(201, 168, 71, 0.50);
+  color: rgba(240, 226, 204, 0.88);
+}
+.journal-filters .pill:hover,
+.journal-filters .pill.active {
+  background: rgba(6, 14, 12, 0.70);
+  border-color: rgba(201, 168, 71, 0.85);
+  color: var(--yellow);
+  box-shadow:
+    0 0 16px rgba(201, 168, 71, 0.18),
+    inset 0 0 8px rgba(201, 168, 71, 0.06);
+  text-shadow: 0 0 10px rgba(201, 168, 71, 0.45);
 }
 
 .journal-grid {

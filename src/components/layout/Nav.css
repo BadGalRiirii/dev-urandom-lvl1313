@@ -16,6 +16,16 @@
   border-bottom: 1px solid rgba(201, 168, 71, 0.08);
 }
 
+/* Journal page — let the wisteria breathe through the nav */
+body.page-journal .nav {
+  background: linear-gradient(to bottom,
+    rgba(6, 14, 12, 0.45) 0%,
+    rgba(6, 14, 12, 0.12) 65%,
+    transparent 100%
+  );
+  border-bottom-color: rgba(201, 168, 71, 0.05);
+}
+
 /* Subtle horizontal ornament under nav — connects to top border runner */
 .nav::after {
   content: '';
