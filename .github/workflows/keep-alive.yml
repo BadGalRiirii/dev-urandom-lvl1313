@@ -3,7 +3,7 @@
 #  - Supabase pauses a project after ~7 days without activity -> queried on every run.
 #
 # Needs these repo secrets (Settings -> Secrets and variables -> Actions):
-#   BACKEND_URL        e.g. https://your-api.onrender.com   (same as VITE_API_URL)
+#   BACKEND_URL        https://dev-urandom-lvl1313-backend.onrender.com
 #   SUPABASE_URL       same as VITE_SUPABASE_PROJECT_URL
 #   SUPABASE_ANON_KEY  same as VITE_SUPABASE_PUBLISHABLE_KEY
 name: keep-alive

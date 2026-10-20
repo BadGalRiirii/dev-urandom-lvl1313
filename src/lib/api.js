@@ -1,6 +1,8 @@
 import { fetchBooks, fetchBook, fetchTracks, fetchPosts, fetchPost } from './supabase'
 
-const BASE = import.meta.env.VITE_API_URL || ''
+// Set in .env (local) and the committed .env.production (deploys). Named apart from
+// the old VITE_API_URL so the stale value in Vercel (a dead Render URL) can't override it.
+const BASE = import.meta.env.VITE_BACKEND_URL || ''
 
 const authHeaders = () => {
   const token = localStorage.getItem('admin_token')
@@ -103,7 +105,7 @@ export const uploadPostImage = async (file) => {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 30000)
   try {
-    const r = await fetch('/api/upload/post-image', {
+    const r = await fetch(`${BASE}/api/upload/post-image`, {
       method: 'POST',
       signal: controller.signal,
       headers: authHeaders(),
