@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Set in .env (local) and the committed .env.production (deploys). Named apart
+// from the old VITE_SUPABASE_URL/ANON_KEY so stale values in Vercel can't override them.
+const supabaseUrl = import.meta.env.VITE_SUPABASE_PROJECT_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 

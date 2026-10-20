@@ -4,8 +4,8 @@
 #
 # Needs these repo secrets (Settings -> Secrets and variables -> Actions):
 #   BACKEND_URL        e.g. https://your-api.onrender.com   (same as VITE_API_URL)
-#   SUPABASE_URL       same as VITE_SUPABASE_URL
-#   SUPABASE_ANON_KEY  same as VITE_SUPABASE_ANON_KEY
+#   SUPABASE_URL       same as VITE_SUPABASE_PROJECT_URL
+#   SUPABASE_ANON_KEY  same as VITE_SUPABASE_PUBLISHABLE_KEY
 name: keep-alive
 
 on:
