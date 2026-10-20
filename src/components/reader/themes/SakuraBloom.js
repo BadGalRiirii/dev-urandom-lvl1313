@@ -8,7 +8,7 @@ export const SakuraBloomMeta = {
   surface: '#f8e8f0',
 }
 
-const PETALS = Array.from({ length: 30 }, (_, i) => ({
+const PETALS = Array.from({ length: 30 }, () => ({
   x: Math.random(),
   y: Math.random(),
   s: 0.4 + Math.random() * 0.8,

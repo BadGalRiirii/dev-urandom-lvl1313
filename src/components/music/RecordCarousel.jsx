@@ -323,7 +323,7 @@ export default function RecordCarousel({
                       transition={{ duration: 0.25 }}
                     >
                       {playingTrack
-                        ? `${playingTrack.title}      ${playingTrack.title}`
+                        ? `${playingTrack.title}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0${playingTrack.title}`
                         : '---'}
                     </motion.span>
                   </AnimatePresence>

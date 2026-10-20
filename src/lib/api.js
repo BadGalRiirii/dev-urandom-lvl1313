@@ -41,10 +41,20 @@ export const wakeBackend = () => {
   fetch(`${BASE}/api/health`).catch(() => {})
 }
 
+// Match the backend's limits so an oversized file fails instantly instead of after uploading
+const MAX_FILE_MB  = 50   // Supabase free plan's per-file limit
+const MAX_IMAGE_MB = 10
+const checkSize = (file, maxMb) => {
+  if (file && file.size > maxMb * 1024 * 1024) {
+    throw new Error(`File is ${(file.size / 1024 / 1024).toFixed(1)} MB — the limit is ${maxMb} MB`)
+  }
+}
+
 // ── Books ────────────────────────────────────────────
 export const getBooks  = fetchBooks
 export const getBook   = fetchBook
 export const uploadBook = async (formData) => {
+  checkSize(formData.get('file'), MAX_FILE_MB)
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 120000)
   try {
@@ -67,6 +77,7 @@ export const deleteBook = (id) => req(`/api/books/${id}`, { method: 'DELETE' })
 // ── Tracks ───────────────────────────────────────────
 export const getTracks = fetchTracks
 export const uploadTrack = async (formData) => {
+  checkSize(formData.get('file'), MAX_FILE_MB)
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 120000)
   try {
@@ -100,6 +111,7 @@ export const adminLogin = (password) =>
 
 // ── Post image upload ────────────────────────────────
 export const uploadPostImage = async (file) => {
+  checkSize(file, MAX_IMAGE_MB)
   const fd = new FormData()
   fd.append('file', file)
   const controller = new AbortController()

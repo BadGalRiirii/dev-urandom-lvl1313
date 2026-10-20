@@ -6,8 +6,10 @@ from api.auth import verify_token
 
 router = APIRouter()
 
-MAX_BOOK_SIZE      = 150 * 1024 * 1024   # 150 MB
-ALLOWED_BOOK_EXTS  = {"pdf", "epub"}
+MAX_BOOK_SIZE      = 50 * 1024 * 1024   # Supabase free plan rejects files over 50 MB
+# Content type comes from the extension, not from whatever the browser claims
+BOOK_TYPES         = {"pdf": "application/pdf", "epub": "application/epub+zip"}
+ALLOWED_BOOK_EXTS  = set(BOOK_TYPES)
 
 
 def get_supabase():
@@ -49,12 +51,12 @@ async def upload_book(
 
     content = await file.read()
     if len(content) > MAX_BOOK_SIZE:
-        raise HTTPException(400, "File too large (max 150 MB)")
+        raise HTTPException(400, "File too large (max 50 MB)")
 
     sb = get_supabase()
     file_path = f"{uuid.uuid4()}.{ext}"
     try:
-        sb.storage.from_("books").upload(file_path, content, {"content-type": file.content_type})
+        sb.storage.from_("books").upload(file_path, content, {"content-type": BOOK_TYPES[ext]})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Storage upload failed: {str(e)}")
     record = {"title": title, "author": author, "file_path": file_path,

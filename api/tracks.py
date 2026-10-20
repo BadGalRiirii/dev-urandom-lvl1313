@@ -6,8 +6,11 @@ from api.auth import verify_token
 
 router = APIRouter()
 
-MAX_TRACK_SIZE     = 150 * 1024 * 1024   # 150 MB
-ALLOWED_TRACK_EXTS = {"mp3", "wav", "ogg", "flac", "aac", "m4a"}
+MAX_TRACK_SIZE     = 50 * 1024 * 1024   # Supabase free plan rejects files over 50 MB
+# Content type comes from the extension, not from whatever the browser claims
+TRACK_TYPES        = {"mp3": "audio/mpeg", "wav": "audio/wav", "ogg": "audio/ogg",
+                      "flac": "audio/flac", "aac": "audio/aac", "m4a": "audio/mp4"}
+ALLOWED_TRACK_EXTS = set(TRACK_TYPES)
 
 
 def get_supabase():
@@ -73,12 +76,12 @@ async def upload_track(
 
     content = await file.read()
     if len(content) > MAX_TRACK_SIZE:
-        raise HTTPException(400, "File too large (max 150 MB)")
+        raise HTTPException(400, "File too large (max 50 MB)")
 
     sb = get_supabase()
     file_path = f"{uuid.uuid4()}.{ext}"
     try:
-        sb.storage.from_("music").upload(file_path, content, {"content-type": file.content_type})
+        sb.storage.from_("music").upload(file_path, content, {"content-type": TRACK_TYPES[ext]})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Storage upload failed: {str(e)}")
 

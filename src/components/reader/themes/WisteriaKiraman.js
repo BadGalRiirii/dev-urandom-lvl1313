@@ -8,7 +8,7 @@ export const WisteriaKiramanMeta = {
   surface: '#221538',
 }
 
-const PETALS = Array.from({ length: 40 }, (_, i) => ({
+const PETALS = Array.from({ length: 40 }, () => ({
   x: Math.random(),
   y: Math.random(),
   speed: 0.2 + Math.random() * 0.4,

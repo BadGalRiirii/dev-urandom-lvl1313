@@ -38,7 +38,7 @@ const MusicPlayerBar = forwardRef(function MusicPlayerBar(
       audioCtxRef.current = ctx
       analyserRef.current = analyser
       onAnalyserReadyRef.current?.(analyser)
-    } catch (e) {
+    } catch {
       // AudioContext unavailable — EQ falls back to CSS animation
     }
   }, [])

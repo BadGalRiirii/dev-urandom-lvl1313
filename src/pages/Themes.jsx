@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { CottageCoreMeta, drawCottageCore } from '../components/reader/themes/CottageCore'
 import { MidnightForestMeta, drawMidnightForest } from '../components/reader/themes/MidnightForest'

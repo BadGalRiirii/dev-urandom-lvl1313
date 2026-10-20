@@ -1,0 +1,51 @@
+.crash {
+  position: relative;
+  z-index: 5;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.crash-card {
+  max-width: 460px;
+  text-align: center;
+  padding: 40px 32px;
+  background: rgba(9, 22, 20, 0.92);
+  border: 1px solid rgba(201, 168, 71, 0.28);
+  border-radius: 4px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+}
+
+.crash-eyebrow {
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 10px;
+}
+
+.crash-title {
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  color: var(--cream);
+  margin-bottom: 12px;
+}
+
+.crash-text {
+  color: rgba(240, 226, 204, 0.75);
+  font-style: italic;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.crash-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.crash-actions .pill {
+  text-decoration: none;
+}

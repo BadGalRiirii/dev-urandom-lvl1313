@@ -9,7 +9,10 @@ from api.auth import verify_token
 router = APIRouter()
 
 MAX_IMAGE_SIZE = 10 * 1024 * 1024   # 10 MB
-ALLOWED_IMAGE_EXTS = {"jpg", "jpeg", "png", "gif", "webp", "avif"}
+# Content type comes from the extension, not from whatever the browser claims
+IMAGE_TYPES = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
+               "gif": "image/gif", "webp": "image/webp", "avif": "image/avif"}
+ALLOWED_IMAGE_EXTS = set(IMAGE_TYPES)
 
 
 def get_supabase():
@@ -91,7 +94,7 @@ async def upload_post_image(
     sb = get_supabase()
     path = f"{uuid.uuid4()}.{ext}"
     try:
-        sb.storage.from_("post-images").upload(path, content, {"content-type": file.content_type})
+        sb.storage.from_("post-images").upload(path, content, {"content-type": IMAGE_TYPES[ext]})
     except Exception as e:
         raise HTTPException(500, f"Storage upload failed: {str(e)}")
     public = sb.storage.from_("post-images").get_public_url(path)

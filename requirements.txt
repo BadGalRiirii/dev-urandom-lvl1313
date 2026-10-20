@@ -1,8 +1,10 @@
-fastapi>=0.111.0
-uvicorn[standard]>=0.29.0
-python-multipart>=0.0.9
-supabase>=2.4.0,<2.23.0
-python-jose[cryptography]>=3.3.0
-python-dotenv>=1.0.0
-aiofiles>=23.2.1
-ebooklib>=0.18
+# Exact versions from the last successful Render deploy (Oct 2026), so a new
+# upstream release can't break a redeploy. Bump deliberately and test locally.
+fastapi==0.154.0
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32
+supabase==2.22.4
+python-jose[cryptography]==3.5.0
+python-dotenv==1.2.4
+aiofiles==25.1.0
+ebooklib==0.20

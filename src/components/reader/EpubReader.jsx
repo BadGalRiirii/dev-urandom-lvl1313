@@ -97,7 +97,7 @@ export default function EpubReader({ url, bookId, fontSize, themeStyle, themeMod
 
   const persistBookmarks = useCallback((bms) => {
     if (bookId) {
-      try { localStorage.setItem(bookmarksKey(bookId), JSON.stringify(bms)) } catch {}
+      try { localStorage.setItem(bookmarksKey(bookId), JSON.stringify(bms)) } catch { /* storage blocked: bookmarks just won't persist */ }
     }
   }, [bookId])
 
@@ -132,7 +132,7 @@ export default function EpubReader({ url, bookId, fontSize, themeStyle, themeMod
       const cfi = loc.start?.cfi ?? null
       cfiRef.current = cfi
       if (bookId && cfi) {
-        try { localStorage.setItem(storageKey(bookId), cfi) } catch {}
+        try { localStorage.setItem(storageKey(bookId), cfi) } catch { /* storage blocked: position won't persist */ }
       }
       setAtStart(loc.atStart ?? false)
       setAtEnd(loc.atEnd   ?? false)
@@ -188,7 +188,7 @@ export default function EpubReader({ url, bookId, fontSize, themeStyle, themeMod
     try {
       await rend.display(item ? item.index : href)
     } catch {
-      try { await rend.display(href) } catch {}
+      try { await rend.display(href) } catch { /* bad TOC link: stay on the current page */ }
     }
     setJumping(false)
   }, [])
@@ -199,7 +199,7 @@ export default function EpubReader({ url, bookId, fontSize, themeStyle, themeMod
     setBmOpen(false)
     setJumping(true)
     await new Promise(r => setTimeout(r, 200))
-    try { await rendRef.current.display(cfi) } catch {}
+    try { await rendRef.current.display(cfi) } catch { /* stale bookmark: stay on the current page */ }
     setJumping(false)
   }, [])
 

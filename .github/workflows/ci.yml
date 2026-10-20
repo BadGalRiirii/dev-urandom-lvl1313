@@ -1,0 +1,39 @@
+# Checks every push and pull request before it goes live.
+# Vercel and Render deploy main on their own; a red X here means look before trusting it.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Known vulnerabilities in shipped packages
+        run: npm audit --omit=dev --audit-level=high
+
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+      - run: pip install -r requirements.txt pytest
+      - name: Tests (no database needed)
+        run: pytest -q

@@ -16,7 +16,7 @@ import cd11 from '../assets/cds/cd11.jpg'
 import cd12 from '../assets/cds/cd12.jpg'
 import cd13 from '../assets/cds/cd13.jpg'
 import {
-  getAllPosts, getPosts, createPost, updatePost, deletePost,
+  getAllPosts, createPost, updatePost, deletePost,
   getBooks, uploadBook, deleteBook,
   getTracks, uploadTrack, deleteTrack,
   uploadPostImage,

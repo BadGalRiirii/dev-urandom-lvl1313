@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 
 import Nav from './components/layout/Nav'
 import BootSequence from './components/layout/BootSequence'
+import ErrorBoundary from './components/layout/ErrorBoundary'
 import MusicPlayerBar from './components/layout/MusicPlayerBar'
 import { wakeBackend } from './lib/api'
 
@@ -140,6 +141,8 @@ function AppInner() {
 
       {showNav && <Nav />}
 
+      {/* Keyed by path so moving to another page clears a crash screen */}
+      <ErrorBoundary key={location.pathname}>
       <Suspense fallback={null}>
       <Routes>
         <Route path="/"        element={<PageWrapper><Home /></PageWrapper>} />
@@ -167,6 +170,7 @@ function AppInner() {
         <Route path="/themes" element={<PageWrapper><Themes /></PageWrapper>} />
       </Routes>
       </Suspense>
+      </ErrorBoundary>
 
       {!isRead && (
         <MusicPlayerBar
