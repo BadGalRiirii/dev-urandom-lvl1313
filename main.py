@@ -9,7 +9,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from api.auth   import router as auth_router
 from api.books  import router as books_router
 from api.tracks import router as tracks_router
-from api.posts  import router as posts_router
+from api.posts  import router as posts_router, get_supabase
 
 # Disable all documentation endpoints — never expose the API surface publicly
 app = FastAPI(
@@ -50,3 +50,15 @@ app.include_router(posts_router,  prefix="/api")
 @app.get("/")
 def root():
     return {"status": "ok"}
+
+
+# Pinged by the keep-alive workflow (.github/workflows/keep-alive.yml) and on
+# every page load. Touching the DB counts as Supabase activity, so one ping
+# keeps both the Render service and the Supabase project awake.
+@app.get("/api/health")
+def health():
+    try:
+        get_supabase().table("posts").select("id").limit(1).execute()
+        return {"status": "ok", "db": "ok"}
+    except Exception:
+        return {"status": "ok", "db": "unreachable"}

@@ -68,6 +68,21 @@ export default function Post() {
           )}
         </header>
 
+        {post.images?.length > 0 && (
+          <div className="post-photos">
+            <span className="post-photos-label">Photos</span>
+            <div className={`post-images post-images--${
+              post.images.length === 2 ? (post.photo_layout || 'duo') : post.images.length
+            }`}>
+              {post.images.map((src, i) => (
+                <div key={i} className="post-images-photo">
+                  <img src={src} alt="" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div
           className="post-body"
           dangerouslySetInnerHTML={{ __html: post.content }}

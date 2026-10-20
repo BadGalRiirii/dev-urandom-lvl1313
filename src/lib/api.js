@@ -33,6 +33,12 @@ const req = async (path, opts = {}, timeout = 5000) => {
   }
 }
 
+// ── Warm-up ──────────────────────────────────────────
+// Fire-and-forget ping so a sleeping backend starts booting before admin needs it
+export const wakeBackend = () => {
+  fetch(`${BASE}/api/health`).catch(() => {})
+}
+
 // ── Books ────────────────────────────────────────────
 export const getBooks  = fetchBooks
 export const getBook   = fetchBook

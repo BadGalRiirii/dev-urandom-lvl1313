@@ -1,21 +1,37 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect, useLayoutEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 
 import Nav from './components/layout/Nav'
 import BootSequence from './components/layout/BootSequence'
 import MusicPlayerBar from './components/layout/MusicPlayerBar'
-
-import Home from './pages/Home'
-import Library from './pages/Library'
-import Read from './pages/Read'
-import Journal from './pages/Journal'
-import Post from './pages/Post'
-import Music from './pages/Music'
-import Admin from './pages/Admin'
-import Themes from './pages/Themes'
+import { wakeBackend } from './lib/api'
 
 import './styles/global.css'
+
+// Each page is its own chunk — three.js, tiptap, epubjs and react-pdf only
+// download when the page that needs them is opened.
+const PAGES = {
+  home:    () => import('./pages/Home'),
+  library: () => import('./pages/Library'),
+  read:    () => import('./pages/Read'),
+  journal: () => import('./pages/Journal'),
+  post:    () => import('./pages/Post'),
+  music:   () => import('./pages/Music'),
+  admin:   () => import('./pages/Admin'),
+  themes:  () => import('./pages/Themes'),
+}
+const Home    = lazy(PAGES.home)
+const Library = lazy(PAGES.library)
+const Read    = lazy(PAGES.read)
+const Journal = lazy(PAGES.journal)
+const Post    = lazy(PAGES.post)
+const Music   = lazy(PAGES.music)
+const Admin   = lazy(PAGES.admin)
+const Themes  = lazy(PAGES.themes)
+
+// Which page chunk the current URL needs, so it can download during the intro
+const pageForPath = (path) => PAGES[path.split('/')[1]] ?? PAGES.home
 
 const HIDE_BOOT_KEY = 'riri_boot_done'
 
@@ -36,12 +52,27 @@ function PageWrapper({ children }) {
   )
 }
 
+const TITLES = {
+  '/':        'riri/dev/urandom',
+  '/library': 'riri/dev/urandom — Library',
+  '/journal': 'riri/dev/urandom — The Journal',
+  '/music':   'riri/dev/urandom — The Music',
+  '/admin':   'riri/dev/urandom — Admin',
+  '/themes':  'riri/dev/urandom — Themes',
+}
+
 function AppInner() {
   const location = useLocation()
   const isRead   = location.pathname.startsWith('/read')
   const isAdmin  = location.pathname.startsWith('/admin')
   const isHome   = location.pathname === '/'
   const showNav  = !isRead && !isAdmin && !isHome
+
+  useLayoutEffect(() => {
+    const base = 'riri/dev/urandom'
+    const custom = TITLES[location.pathname]
+    document.title = custom ?? base
+  }, [location.pathname])
 
   const [currentTrack,   setCurrentTrack]   = useState(null)
   const [isAudioPlaying, setIsAudioPlaying] = useState(false)
@@ -51,6 +82,33 @@ function AppInner() {
 
   const playerRef     = useRef(null)
   const trackEndedRef = useRef(null)
+
+  // Keep live refs so the spacebar handler never captures stale state
+  const isPlayingRef    = useRef(isAudioPlaying)
+  const currentTrackRef = useRef(currentTrack)
+  useEffect(() => { isPlayingRef.current    = isAudioPlaying }, [isAudioPlaying])
+  useEffect(() => { currentTrackRef.current = currentTrack   }, [currentTrack])
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.code !== 'Space') return
+      if (!currentTrackRef.current) return
+      // Only skip spacebar in actual text-entry elements.
+      // Buttons/selects must NOT be excluded — without this, spacebar on a focused
+      // skip/eject button fires that button's click instead of play/pause.
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (document.activeElement?.isContentEditable) return
+      e.preventDefault()
+      if (isPlayingRef.current) {
+        playerRef.current?.pause()
+      } else {
+        playerRef.current?.resume()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const handlePlay   = useCallback((track) => setCurrentTrack(track), [])
   const handlePause  = useCallback(() => playerRef.current?.pause(),  [])
@@ -82,6 +140,7 @@ function AppInner() {
 
       {showNav && <Nav />}
 
+      <Suspense fallback={null}>
       <Routes>
         <Route path="/"        element={<PageWrapper><Home /></PageWrapper>} />
         <Route path="/library" element={<PageWrapper><Library /></PageWrapper>} />
@@ -107,6 +166,7 @@ function AppInner() {
         <Route path="/admin"  element={<Admin />} />
         <Route path="/themes" element={<PageWrapper><Themes /></PageWrapper>} />
       </Routes>
+      </Suspense>
 
       {!isRead && (
         <MusicPlayerBar
@@ -126,10 +186,18 @@ function AppInner() {
 export default function App() {
   const [booted, setBooted] = useState(() => !!sessionStorage.getItem(HIDE_BOOT_KEY))
 
-  const handleBootComplete = () => {
+  // While the intro types out: wake the Render backend (it sleeps when idle
+  // and takes ~30-50s to cold start) and download the page about to be shown
+  // (for Home this also starts fetching the 3D model).
+  useEffect(() => {
+    wakeBackend()
+    pageForPath(window.location.pathname)().catch(() => {})
+  }, [])
+
+  const handleBootComplete = useCallback(() => {
     sessionStorage.setItem(HIDE_BOOT_KEY, '1')
     setBooted(true)
-  }
+  }, [])
 
   return (
     <BrowserRouter>

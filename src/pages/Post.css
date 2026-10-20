@@ -121,6 +121,100 @@
   color: var(--yellow);
 }
 
+/* ── Photo section (editorial wrapper) ────────────── */
+.post-photos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.post-photos-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted2);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.post-photos-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, var(--border), transparent);
+}
+
+/* ── Photo grid ────────────────────────────────────── */
+.post-images {
+  display: grid;
+  gap: 8px;
+}
+
+/* Single */
+.post-images--1 {
+  grid-template-columns: 1fr;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Duo: equal 50/50 */
+.post-images--duo,
+.post-images--2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Feature: big left 2/3, accent right 1/3 */
+.post-images--feature {
+  grid-template-columns: 2fr 1fr;
+  align-items: start;
+}
+.post-images--feature .post-images-photo:first-child {
+  aspect-ratio: 3 / 2;
+}
+.post-images--feature .post-images-photo:last-child {
+  aspect-ratio: 3 / 4;
+}
+
+/* Stacked: both full width, cinematic ratio */
+.post-images--stacked {
+  grid-template-columns: 1fr;
+}
+.post-images--stacked .post-images-photo {
+  aspect-ratio: 16 / 7;
+}
+
+/* Broadsheet: hero full-width top, accent bottom-right */
+.post-images--broadsheet {
+  grid-template-columns: 1fr 1fr;
+}
+.post-images--broadsheet .post-images-photo:first-child {
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 7;
+}
+
+/* ── Photo cell ────────────────────────────────────── */
+.post-images-photo {
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid rgba(201, 168, 71, 0.14);
+  aspect-ratio: 4 / 3;
+}
+
+.post-images-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.45s ease;
+}
+
+.post-images-photo:hover img {
+  transform: scale(1.04);
+}
+
 .post-not-found {
   font-size: 0.8rem;
   color: var(--muted);

@@ -379,11 +379,132 @@ function PostImageUploader({ current, onChange }) {
   )
 }
 
+// ── Post Images Uploader (2-slot with swap) ───────────────────────────────────
+function PostImagesUploader({ value, onChange }) {
+  const [uploading, setUploading] = useState([false, false])
+  const [errs, setErrs] = useState(['', ''])
+  const inputRef0 = useRef()
+  const inputRef1 = useRef()
+  const inputRefs = [inputRef0, inputRef1]
+
+  const handleFile = async (idx, file) => {
+    if (!file) return
+    setErrs(e => { const n = [...e]; n[idx] = ''; return n })
+    setUploading(u => { const n = [...u]; n[idx] = true; return n })
+    try {
+      const { url } = await uploadPostImage(file)
+      const next = [value[0] || '', value[1] || '']
+      next[idx] = url
+      onChange(next.filter(Boolean))
+    } catch (e) {
+      setErrs(er => { const n = [...er]; n[idx] = e.message; return n })
+    } finally {
+      setUploading(u => { const n = [...u]; n[idx] = false; return n })
+    }
+  }
+
+  const remove = (idx) => {
+    const next = [value[0] || '', value[1] || '']
+    next[idx] = ''
+    onChange(next.filter(Boolean))
+  }
+
+  const swap = () => {
+    if (value[0] && value[1]) onChange([value[1], value[0]])
+  }
+
+  const canSwap = !!(value[0] && value[1])
+
+  return (
+    <div className="post-images-uploader">
+      <span className="mono admin-section-title" style={{ fontSize: '0.65rem' }}>// Post Photos (optional, up to 2)</span>
+      <div className="post-images-slots">
+        {[0, 1].map(idx => (
+          <div key={idx} className="post-images-slot">
+            {value[idx] ? (
+              <div className="post-images-slot-preview">
+                <img src={value[idx]} alt={`Photo ${idx + 1}`} />
+                <button type="button" className="post-images-remove" onClick={() => remove(idx)}>×</button>
+                <span className="post-images-slot-num mono">{idx === 0 ? 'L' : 'R'}</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="post-images-slot-empty"
+                onClick={() => inputRefs[idx].current?.click()}
+                disabled={uploading[idx]}
+              >
+                <span className="post-images-slot-icon">↑</span>
+                <span className="post-images-slot-label">
+                  {uploading[idx] ? 'Uploading…' : `Photo ${idx + 1}`}
+                </span>
+              </button>
+            )}
+            <input
+              ref={inputRefs[idx]}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={e => handleFile(idx, e.target.files[0])}
+            />
+            {errs[idx] && (
+              <span className="mono" style={{ color: 'var(--red)', fontSize: '0.62rem', marginTop: 4 }}>
+                {errs[idx]}
+              </span>
+            )}
+          </div>
+        ))}
+
+        <button
+          type="button"
+          className={`post-images-swap${!canSwap ? ' post-images-swap--off' : ''}`}
+          onClick={swap}
+          disabled={!canSwap}
+          title="Swap Left / Right"
+        >
+          ⇄
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Photo Layout Picker ───────────────────────────────────────────────────────
+const PHOTO_LAYOUTS = [
+  { id: 'duo',        label: 'Side by Side' },
+  { id: 'feature',    label: 'Feature'      },
+  { id: 'stacked',    label: 'Stacked'      },
+  { id: 'broadsheet', label: 'Broadsheet'   },
+]
+
+function PhotoLayoutPicker({ value, onChange }) {
+  return (
+    <div className="photo-layout-picker">
+      <span className="mono admin-section-title" style={{ fontSize: '0.65rem' }}>// Photo Layout</span>
+      <div className="photo-layout-options">
+        {PHOTO_LAYOUTS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            className={`photo-layout-btn${value === id ? ' photo-layout-btn--on' : ''}`}
+            onClick={() => onChange(id)}
+          >
+            <div className={`photo-layout-icon photo-layout-icon--${id}`}>
+              <span /><span />
+            </div>
+            <span className="photo-layout-label">{label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── Post Manager ──────────────────────────────────────────────────────────────
 function PostsTab() {
   const [posts, setPosts] = useState([])
   const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({ title: '', content: '', category: 'book', related_title: '', rating: 5, published: true, cover_image: '' })
+  const [form, setForm] = useState({ title: '', content: '', category: 'book', related_title: '', rating: 5, published: true, cover_image: '', images: [], photo_layout: 'duo' })
   const [saving, setSaving] = useState(false)
   const formRef = useRef()
 
@@ -391,12 +512,12 @@ function PostsTab() {
 
   const resetForm = () => {
     setEditing(null)
-    setForm({ title: '', content: '', category: 'book', related_title: '', rating: 5, published: true, cover_image: '' })
+    setForm({ title: '', content: '', category: 'book', related_title: '', rating: 5, published: true, cover_image: '', images: [], photo_layout: 'duo' })
   }
 
   const loadPost = (post) => {
     setEditing(post.id)
-    setForm({ title: post.title, content: post.content, category: post.category, related_title: post.related_title || '', rating: post.rating || 5, published: post.published, cover_image: post.cover_image || '' })
+    setForm({ title: post.title, content: post.content, category: post.category, related_title: post.related_title || '', rating: post.rating || 5, published: post.published, cover_image: post.cover_image || '', images: post.images || [], photo_layout: post.photo_layout || 'duo' })
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
@@ -466,6 +587,20 @@ function PostsTab() {
             current={form.cover_image}
             onChange={(url) => setForm(f => ({ ...f, cover_image: url }))}
           />
+
+          {/* Inline post photos (up to 2) */}
+          <PostImagesUploader
+            value={form.images}
+            onChange={(imgs) => setForm(f => ({ ...f, images: imgs }))}
+          />
+
+          {/* Layout picker — only relevant when 2 photos are uploaded */}
+          {form.images.length >= 2 && (
+            <PhotoLayoutPicker
+              value={form.photo_layout}
+              onChange={(layout) => setForm(f => ({ ...f, photo_layout: layout }))}
+            />
+          )}
 
           <div className="post-form-actions">
             <label className="post-published-toggle">

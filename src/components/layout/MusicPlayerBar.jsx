@@ -1,6 +1,6 @@
 import { forwardRef, useRef, useEffect, useImperativeHandle, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import cdFallback from '../../assets/cd.png'
+import cdFallback from '../../assets/cd.webp'
 import './MusicPlayerBar.css'
 
 const MusicPlayerBar = forwardRef(function MusicPlayerBar(

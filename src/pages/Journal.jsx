@@ -1,10 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Component, lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import PostCard from '../components/blog/PostCard'
-import WisteriaScene from '../components/journal/WisteriaScene'
 import { getPosts } from '../lib/api'
-import wisImg from '../assets/wisteria.png'
+import wisImg from '../assets/wisteria.webp'
 import './Journal.css'
+
+class SceneBoundary extends Component {
+  state = { failed: false }
+  static getDerivedStateFromError() { return { failed: true } }
+  render() { return this.state.failed ? null : this.props.children }
+}
+
+// three.js is big — load it separately so the posts show up first
+const WisteriaScene = lazy(() => import('../components/journal/WisteriaScene'))
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const CATEGORIES = ['all', 'book', 'film', 'series', 'personal']
 
@@ -36,7 +45,11 @@ export default function Journal() {
       </div>
 
       {/* ── Falling wisteria petals ── */}
-      <WisteriaScene />
+      {!reducedMotion && (
+        <SceneBoundary>
+          <Suspense fallback={null}><WisteriaScene /></Suspense>
+        </SceneBoundary>
+      )}
 
       {/* ── Page content ── */}
       <div className="journal-page page">

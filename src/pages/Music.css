@@ -1,7 +1,36 @@
+/* ── Atmospheric overlay — sits between canvas bg and page content ── */
+.music-bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    /* top — narrow nav bar tint only */
+    linear-gradient(to bottom,
+      rgba(4, 12, 10, 0.58) 0%,
+      rgba(4, 12, 10, 0.10) 10%,
+      transparent 22%
+    ),
+    /* bottom — player bar tint only */
+    linear-gradient(to top,
+      rgba(4, 12, 10, 0.70) 0%,
+      rgba(4, 12, 10, 0.12) 13%,
+      transparent 26%
+    ),
+    /* barely-there vignette — doesn't kill the image */
+    radial-gradient(ellipse at center,
+      transparent 50%,
+      rgba(2, 8, 6, 0.22) 100%
+    );
+}
+
+/* ── Page content — above canvas and overlay ── */
 .music-page {
-  padding: 84px 40px 40px;
+  padding: 84px 40px 100px; /* bottom must clear the 76px player bar */
   min-height: 100vh;
   overflow-x: hidden;
+  position: relative;
+  z-index: 2;
 }
 
 .music-header {
@@ -13,20 +42,36 @@
   font-size: 0.65rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--yellow);
+  color: #ffe484;
   margin-bottom: 8px;
+  text-shadow:
+    0 0 4px  rgba(0,0,0,1),
+    0 0 14px rgba(0,0,0,0.88),
+    0 0 28px rgba(190,145,10,0.50);
 }
 
 .music-title {
   font-size: clamp(2.5rem, 5vw, 4rem);
-  color: var(--cream);
+  color: #fde68a;
   margin-bottom: 4px;
+  text-shadow:
+     1px  1px 0   rgba(0,0,0,0.95),
+    -1px -1px 0   rgba(0,0,0,0.95),
+     1px -1px 0   rgba(0,0,0,0.95),
+    -1px  1px 0   rgba(0,0,0,0.95),
+     0 0 8px  rgba(0,0,0,1),
+     0 0 22px rgba(0,0,0,0.88),
+     0 0 44px rgba(200,155,15,0.55);
 }
 
 .music-sub {
   font-style: italic;
-  color: var(--muted);
+  color: rgba(253, 222, 120, 0.82);
   font-size: 1rem;
+  text-shadow:
+    0 0 4px  rgba(0,0,0,1),
+    0 0 14px rgba(0,0,0,0.85),
+    0 0 30px rgba(180,140,10,0.40);
 }
 
 .music-loading {
@@ -45,9 +90,12 @@
 .music-empty {
   text-align: center;
   padding: 80px 0;
-  color: var(--muted);
+  color: rgba(253, 222, 120, 0.70);
   font-size: 0.8rem;
   letter-spacing: 0.06em;
+  text-shadow:
+    0 0 4px  rgba(0,0,0,1),
+    0 0 14px rgba(0,0,0,0.85);
 }
 
 @media (max-width: 768px) {

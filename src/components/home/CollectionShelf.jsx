@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
-import wisteria from '../../assets/wisteria.jpg'
-import lilypods from '../../assets/lilypods.png'
-import cdImg   from '../../assets/cd.png'
+import wisteria from '../../assets/wisteria.webp'
+import lilypods from '../../assets/lilies.jpg'
+import cdImg   from '../../assets/cd.webp'
 import './CollectionShelf.css'
 
 const ITEMS = [

@@ -32,6 +32,7 @@
   /* ── Legacy aliases (cascade to all components) ── */
   --green:       #c9a847;
   --green-dim:   rgba(201, 168, 71, 0.48);
+  --yellow-dim:  rgba(201, 168, 71, 0.55);
   --cyan:        #2d7870;
   --cyan-dim:    rgba(45, 120, 112, 0.48);
   --magenta:     #c87a58;
@@ -106,6 +107,18 @@ body::before {
   80% { background-position: 3% 35%; }
   90% { background-position: -10% 10%; }
   100% { background-position: 0 0; }
+}
+
+/* Journal: the petal canvas repaints every frame, and full-screen blend-mode layers
+   above/below it get re-composited each time. The grain is invisible on the bright
+   wisteria photo and the light leaks sit under it, so drop them on that page. */
+body.page-journal::before,
+body.page-journal .light-leak {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
 }
 
 /* ─── FINE SCANLINES (very subtle) ──────────────── */
@@ -271,7 +284,8 @@ a {
   background: transparent;
   color: rgba(240, 226, 204, 0.65);
   cursor: pointer;
-  transition: var(--transition);
+  transition: color 0.28s ease, background 0.28s ease, border-color 0.28s ease,
+              box-shadow 0.28s ease, text-shadow 0.28s ease;
 }
 .pill:hover, .pill.active {
   border-color: rgba(201, 168, 71, 0.7);

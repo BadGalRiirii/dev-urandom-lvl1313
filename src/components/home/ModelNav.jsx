@@ -12,7 +12,7 @@ const NAV = [
 ]
 
 function Model() {
-  const { scene } = useGLTF('/models/base_basic_shaded.glb')
+  const { scene } = useGLTF('/models/base_basic_shaded.opt.glb')
   return <primitive object={scene} scale={11.2} position={[0, -10.8, 0]} dispose={null} />
 }
 
@@ -54,7 +54,7 @@ function CameraRig({ orbitRef }) {
   return null
 }
 
-useGLTF.preload('/models/base_basic_shaded.glb')
+useGLTF.preload('/models/base_basic_shaded.opt.glb')
 
 export default function ModelNav() {
   const navigate   = useNavigate()

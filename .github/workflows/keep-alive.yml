@@ -1,0 +1,40 @@
+# Keeps the free-tier services awake so the site has its data ready whenever it's opened.
+#  - Render (backend) sleeps after 15 min without traffic -> pinged every 10 min.
+#  - Supabase pauses a project after ~7 days without activity -> queried on every run.
+#
+# Needs these repo secrets (Settings -> Secrets and variables -> Actions):
+#   BACKEND_URL        e.g. https://your-api.onrender.com   (same as VITE_API_URL)
+#   SUPABASE_URL       same as VITE_SUPABASE_URL
+#   SUPABASE_ANON_KEY  same as VITE_SUPABASE_ANON_KEY
+name: keep-alive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wake backend (also touches Supabase via /api/health)
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        run: |
+          if [ -z "$BACKEND_URL" ]; then echo "BACKEND_URL secret not set, skipping"; exit 0; fi
+          # A cold start on Render can take ~50s, hence the long timeout + retries
+          curl -fsS --max-time 90 --retry 3 --retry-delay 10 --retry-all-errors \
+            "${BACKEND_URL%/}/api/health"
+
+      - name: Ping Supabase directly
+        if: ${{ always() }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ]; then echo "SUPABASE_URL secret not set, skipping"; exit 0; fi
+          curl -fsS --max-time 30 --retry 3 --retry-delay 5 \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "${SUPABASE_URL%/}/rest/v1/posts?select=id&limit=1"

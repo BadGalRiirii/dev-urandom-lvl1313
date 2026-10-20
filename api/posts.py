@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from supabase import create_client
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from api.auth import verify_token
 
 router = APIRouter()
@@ -26,6 +26,8 @@ class PostBody(BaseModel):
     rating: Optional[int] = None
     published: Optional[bool] = True
     cover_image: Optional[str] = None
+    images: Optional[List[str]] = []
+    photo_layout: Optional[str] = "duo"
 
 
 @router.get("/posts")

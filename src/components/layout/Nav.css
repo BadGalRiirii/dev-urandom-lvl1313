@@ -16,14 +16,51 @@
   border-bottom: 1px solid rgba(201, 168, 71, 0.08);
 }
 
-/* Journal page — let the wisteria breathe through the nav */
+body.page-journal .nav-chapter {
+  color: #fde68a;
+  border-left-color: rgba(240, 200, 75, 0.80);
+  text-shadow:
+    1px  1px 0 rgba(0,0,0,0.98),
+   -1px -1px 0 rgba(0,0,0,0.98),
+    1px -1px 0 rgba(0,0,0,0.98),
+   -1px  1px 0 rgba(0,0,0,0.98),
+    0 0 8px  rgba(0,0,0,1),
+    0 0 20px rgba(0,0,0,0.90),
+    0 0 36px rgba(200,155,15,0.55);
+}
+
+/* Journal page — darker top so nav links are readable against bright sky */
 body.page-journal .nav {
   background: linear-gradient(to bottom,
-    rgba(6, 14, 12, 0.45) 0%,
-    rgba(6, 14, 12, 0.12) 65%,
+    rgba(4, 10, 8, 0.82) 0%,
+    rgba(4, 10, 8, 0.45) 60%,
     transparent 100%
   );
-  border-bottom-color: rgba(201, 168, 71, 0.05);
+  border-bottom-color: rgba(201, 168, 71, 0.12);
+}
+
+body.page-journal .nav-links .pill {
+  color: #fde68a;
+  border-color: rgba(220, 175, 55, 0.42);
+  text-shadow:
+    0 0 4px  rgba(0,0,0,1),
+    0 0 12px rgba(0,0,0,0.92),
+    0 0 24px rgba(0,0,0,0.75);
+}
+
+body.page-journal .nav-links .pill:hover,
+body.page-journal .nav-links .pill.active {
+  color: #ffe97a;
+  border-color: rgba(240, 200, 75, 0.88);
+  background: rgba(15, 10, 2, 0.55);
+  text-shadow:
+    0 0 4px  rgba(0,0,0,1),
+    0 0 12px rgba(0,0,0,0.92),
+    0 0 24px rgba(210, 160, 15, 0.65),
+    0 0 44px rgba(190, 140, 10, 0.40);
+  box-shadow:
+    0 0 14px rgba(200, 155, 15, 0.22),
+    inset 0 0 8px rgba(200, 155, 15, 0.06);
 }
 
 /* Subtle horizontal ornament under nav — connects to top border runner */

@@ -16,8 +16,8 @@ const LINES = [
   { text: 'chongke tayo magdamag.',            type: 'poetic' },
 ]
 
-const CHAR_DELAY = { term: 32, poetic: 52 }
-const LINE_PAUSE  = { term: 420, blank: 320, poetic: 750 }
+const CHAR_DELAY = { term: 20, poetic: 34 }
+const LINE_PAUSE  = { term: 260, blank: 180, poetic: 500 }
 
 export default function BootSequence({ onComplete }) {
   const [lineIndex, setLineIndex] = useState(0)
@@ -25,12 +25,30 @@ export default function BootSequence({ onComplete }) {
   const [exiting,   setExiting]   = useState(false)
 
   useEffect(() => {
+    // Background tabs throttle timers (down to once a minute in Chrome) and pause
+    // animation frames, so a timer-driven intro would stall there. Finish the boot
+    // synchronously instead, so the site is already loaded when you come back.
+    const finishNow = () => onComplete()
+    const onVisibility = () => { if (document.visibilityState === 'hidden') finishNow() }
+    if (document.visibilityState === 'hidden') { finishNow(); return }
+    document.addEventListener('visibilitychange', onVisibility)
+    // Window losing focus (new window / alt-tab) just fast-forwards the typing
+    const skip = () => setLineIndex(i => Math.max(i, LINES.length))
+    window.addEventListener('blur', skip)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('blur', skip)
+    }
+  }, [onComplete])
+
+  useEffect(() => {
     if (lineIndex >= LINES.length) {
+      let t2
       const t = setTimeout(() => {
         setExiting(true)
-        setTimeout(onComplete, 420)
-      }, 1100)
-      return () => clearTimeout(t)
+        t2 = setTimeout(onComplete, 420)
+      }, 700)
+      return () => { clearTimeout(t); clearTimeout(t2) }
     }
 
     const line = LINES[lineIndex]
@@ -44,17 +62,18 @@ export default function BootSequence({ onComplete }) {
     const linePause = LINE_PAUSE[line.type] ?? 420
 
     let i = 0
+    let next
     setDisplayed('')
     const interval = setInterval(() => {
       i++
       setDisplayed(line.text.slice(0, i))
       if (i >= line.text.length) {
         clearInterval(interval)
-        setTimeout(() => setLineIndex(prev => prev + 1), linePause)
+        next = setTimeout(() => setLineIndex(prev => prev + 1), linePause)
       }
     }, charDelay)
 
-    return () => clearInterval(interval)
+    return () => { clearInterval(interval); clearTimeout(next) }
   }, [lineIndex, onComplete])
 
   const currentLine = LINES[lineIndex]

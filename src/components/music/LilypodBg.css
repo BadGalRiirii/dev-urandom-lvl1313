@@ -1,0 +1,18 @@
+.lilypod-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  display: block;
+  background: #091614;
+  /* Drawn at full device resolution now, so no blur is needed to hide pixels */
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.lilypod-bg.is-ready {
+  opacity: 1;
+}
