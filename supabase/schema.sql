@@ -1,6 +1,7 @@
 -- ═══════════════════════════════════════════════════
 -- riri/dev/urandom — Supabase Schema
 -- Run this in the Supabase SQL editor
+-- Matches the live database (project jlhtxjgmixcvippwhqnh, Oct 2026)
 -- ═══════════════════════════════════════════════════
 
 -- Enable UUID extension
@@ -25,12 +26,15 @@ create table if not exists posts (
   id            uuid primary key default gen_random_uuid(),
   title         text not null,
   content       text,
-  category      text default 'book' check (category in ('book', 'film', 'series')),
+  category      text default 'book',            -- free-form: book, film, series, personal, custom…
   related_title text,
   rating        int check (rating between 1 and 5),
   published     boolean default true,
   created_at    timestamptz default now(),
-  updated_at    timestamptz default now()
+  updated_at    timestamptz default now(),
+  images        text[] default '{}',
+  cover_image   text,
+  photo_layout  text default 'duo'
 );
 
 -- auto-update updated_at
@@ -52,7 +56,7 @@ create table if not exists tracks (
   title        text not null,
   artist       text,
   file_path    text not null,
-  cd_image     int default 1,
+  cover_color  text default '#e6b400',
   duration     float,
   created_at   timestamptz default now()
 );
@@ -81,32 +85,31 @@ insert into site_settings (theme, site_name, tagline)
 values ('cottage', 'riri/dev/urandom', 'every thing i loved')
 on conflict do nothing;
 
--- ── Storage Buckets (run these separately or via Supabase dashboard) ──
--- create bucket "books" with public = false
--- create bucket "music" with public = false
+-- ── Storage Buckets (create via the Supabase dashboard or storage API) ──
+-- books, music, post-images — all public
 
 -- ── RLS Policies ─────────────────────────────────────
--- Books: public read
-alter table books enable row level security;
-create policy "books_public_read" on books for select using (true);
-create policy "books_service_insert" on books for insert with check (true);
-create policy "books_service_update" on books for update using (true);
-
--- Posts: public read published only
-alter table posts enable row level security;
-create policy "posts_public_read" on posts for select using (published = true);
-create policy "posts_service_all" on posts for all using (true);
-
--- Tracks: public read
-alter table tracks enable row level security;
-create policy "tracks_public_read" on tracks for select using (true);
-create policy "tracks_service_insert" on tracks for insert with check (true);
-
--- Highlights: public read
-alter table highlights enable row level security;
-create policy "highlights_public_read" on highlights for select using (true);
-create policy "highlights_service_all" on highlights for all using (true);
-
--- Site settings: public read
+-- Visitors (anon key, shipped in the site bundle) can only READ.
+-- All writes go through the backend with the secret key, which bypasses RLS,
+-- so no "service" policies are needed — a policy without `to <role>` applies
+-- to everyone, including anonymous visitors.
+alter table books         enable row level security;
+alter table posts         enable row level security;
+alter table tracks        enable row level security;
+alter table highlights    enable row level security;
 alter table site_settings enable row level security;
-create policy "settings_public_read" on site_settings for select using (true);
+
+create policy "books_public_read"      on books         for select using (true);
+create policy "posts_public_read"      on posts         for select using (published = true);
+create policy "tracks_public_read"     on tracks        for select using (true);
+create policy "highlights_public_read" on highlights    for select using (true);
+create policy "settings_public_read"   on site_settings for select using (true);
+
+revoke insert, update, delete, truncate
+  on books, highlights, posts, site_settings, tracks
+  from anon, authenticated;
+
+-- The one visitor write: the reader saves how far into a book you are
+create policy "books_progress_update" on books for update to anon, authenticated
+  using (true) with check (true);
+grant update (progress, current_page) on books to anon, authenticated;

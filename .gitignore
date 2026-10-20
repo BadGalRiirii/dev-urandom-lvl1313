@@ -35,3 +35,6 @@ __pycache__/
 venv/
 .venv/
 dist/
+
+# Supabase data backups — never commit
+supa-backup/
