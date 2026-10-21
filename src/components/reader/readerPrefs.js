@@ -2,7 +2,7 @@
 
 const PREFS_KEY = 'riri_reader_prefs'
 // Bumped when a default changes enough that everyone should get the new one once
-const PREFS_VERSION = 2
+const PREFS_VERSION = 3
 
 export const THEMES = {
   paper: { label: 'Paper', bg: '#f4ecdf', text: '#2b2118', accent: '#7a4a22' },
@@ -35,8 +35,6 @@ export const DEFAULT_PREFS = {
   spacing:  'comfy',
   width:    'medium',
   justify:  false,
-  flow:     'paginated',  // 'scrolled' | 'paginated'
-  spread:   true,         // two pages side by side, when the screen has room
 }
 
 // A phone held at arm's length needs less than a laptop screen
@@ -45,11 +43,11 @@ const deviceFontSize = () => (window.matchMedia('(max-width: 600px)').matches ? 
 export function loadPrefs() {
   try {
     const saved = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}')
-    if (saved.v !== PREFS_VERSION) {
-      // v2: books open as pages, and phones start with smaller text
-      delete saved.flow
-      if (saved.fontSize === 19) delete saved.fontSize
-    }
+    // Page-turning mode is gone: books always scroll
+    delete saved.flow
+    delete saved.spread
+    // v2+: phones start with smaller text
+    if ((saved.v ?? 1) < 2 && saved.fontSize === 19) delete saved.fontSize
     const prefs = { ...DEFAULT_PREFS, fontSize: deviceFontSize(), ...saved, v: PREFS_VERSION }
     // Drop anything stale from an older version of these options
     if (!THEMES[prefs.theme])    prefs.theme   = DEFAULT_PREFS.theme
@@ -69,7 +67,7 @@ export function savePrefs(prefs) {
 // CSS injected into the book's own pages (as text, so each change REPLACES the last —
 // epub.js's rule-object themes only ever append). The !importants are needed because
 // EPUBs ship their own styles: fixed colours, justified text, tight leading.
-export function buildBookCss(prefs, flow) {
+export function buildBookCss(prefs) {
   const t      = THEMES[prefs.theme]
   const family = FONTS[prefs.font].family
   const lh     = SPACING[prefs.spacing]
@@ -84,11 +82,11 @@ export function buildBookCss(prefs, flow) {
       // iPhones otherwise blow up the text in a frame they think is too wide
       '-webkit-text-size-adjust': '100%',
       'text-size-adjust': '100%',
-      // Sideways swipes turn pages — don't let the browser treat them as back/forward.
-      // Only sideways: blocking vertical too stops the scroll reaching the box around
-      // the frame, and then the book can't be scrolled at all.
+      // A sideways swipe mustn't be read as back/forward. Only sideways: blocking
+      // vertical too stops the scroll reaching the box around the frame, and then the
+      // book can't be scrolled at all.
       'overscroll-behavior-x': 'none',
-      ...(flow === 'paginated' ? { 'touch-action': 'pan-y pinch-zoom' } : {}),
+      'overflow-x': 'hidden',
     },
     'body': {
       'background':  `${t.bg} !important`,
@@ -100,17 +98,11 @@ export function buildBookCss(prefs, flow) {
       'font-kerning': 'normal',
       'overflow-wrap': 'break-word',
       ...font,
-      // Scroll mode: the frame spans the screen, so centre a readable column inside it
-      ...(flow === 'scrolled' ? {
-        'max-width': `${WIDTHS[prefs.width]}em !important`,
-        'margin':    '0 auto !important',
-        'padding':   '1.6em clamp(22px, 6vw, 32px) 3em !important',
-        'box-sizing': 'border-box',
-      } : {
-        // Pages: a little more air above and below the text than epub.js leaves
-        'padding-top':    '28px !important',
-        'padding-bottom': '24px !important',
-      }),
+      // The frame spans the screen, so centre a readable column inside it
+      'max-width': `${WIDTHS[prefs.width]}em !important`,
+      'margin':    '0 auto !important',
+      'padding':   '1.6em clamp(22px, 6vw, 32px) 3em !important',
+      'box-sizing': 'border-box',
     },
     'body *': { 'color': 'inherit !important', 'background-color': 'transparent !important' },
     'p, li, blockquote, dd, dt, div': { 'line-height': `${lh} !important`, ...font },
@@ -119,20 +111,19 @@ export function buildBookCss(prefs, flow) {
       'text-align':      `${align} !important`,
       'hyphens':         prefs.justify ? 'auto' : 'manual',
       '-webkit-hyphens': prefs.justify ? 'auto' : 'manual',
-      // no lone word on a paragraph's last line, no lone line at a page's top or bottom
+      // no lone word on a paragraph's last line
       'text-wrap': 'pretty',
-      'orphans': '2', 'widows': '2',
     },
     'h1, h2, h3, h4, h5, h6': {
       'line-height': '1.25 !important', 'color': `${t.accent} !important`,
-      'text-wrap': 'balance', 'break-after': 'avoid', 'text-indent': '0 !important', ...font,
+      'text-wrap': 'balance', 'text-indent': '0 !important', ...font,
     },
     'blockquote': { 'margin-left': '1.2em !important', 'margin-right': '0.6em !important' },
     'table': { 'max-width': '100% !important' },
     'pre': { 'white-space': 'pre-wrap !important' },
     // Real links only — some books wrap whole chapters in a bare <a id>
     'a[href], a[href] *': { 'color': `${t.accent} !important` },
-    'img, svg, video': { 'max-width': '100% !important', 'height': 'auto !important', 'break-inside': 'avoid' },
+    'img, svg, video': { 'max-width': '100% !important', 'height': 'auto !important' },
     'img': { 'display': 'block', 'margin': '1.5em auto' },
     '::selection': { 'background': `${t.accent}55` },
   }

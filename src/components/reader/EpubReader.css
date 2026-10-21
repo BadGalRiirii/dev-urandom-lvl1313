@@ -125,14 +125,6 @@
   letter-spacing: 0.06em;
   color: var(--r-muted);
 }
-.rd-foot-left {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.rd-foot-left:empty { display: none; }
 .rd-foot-pct { flex-shrink: 0; min-width: 3.2ch; text-align: right; }
 .rd-track {
   flex: 1;
@@ -148,7 +140,6 @@
   transform: scaleX(0);
   transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.chrome-hidden .rd-foot-left,
 .chrome-hidden .rd-foot-pct { opacity: 0.35; }
 
 /* ─── Reading area ─────────────────────────────────── */
@@ -170,56 +161,13 @@
   overflow: hidden;
   transition: opacity 0.18s ease;
 }
-.epub-reader[data-flow="paginated"] .rd-book {
-  /* A page is one comfortable column (or two, side by side), not the full screen */
-  width: min(100%, var(--r-book));
-}
-/* Two pages: a faint fold down the middle, like an open book */
-.rd-book.spread::after {
-  content: '';
-  position: absolute;
-  top: 4%;
-  bottom: 4%;
-  left: 50%;
-  width: 1px;
-  z-index: 2;
-  pointer-events: none;
-  background: linear-gradient(transparent, var(--r-faint) 18%, var(--r-faint) 82%, transparent);
-  box-shadow: 0 0 22px 7px color-mix(in srgb, var(--r-text) 3%, transparent);
-}
 .rd-book.jumping { opacity: 0; pointer-events: none; }
 
-/* epub.js's own scroll box (scroll mode) */
+/* epub.js's own scroll box */
 .rd-book .epub-container {
+  overflow-x: hidden !important;
   scrollbar-width: thin;
   scrollbar-color: var(--r-faint) transparent;
-}
-
-/* Page-turn margins (pages mode, mouse users; touch uses taps and swipes) */
-.rd-turn {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  z-index: 5;
-  width: max(48px, calc((100% - var(--r-book)) / 2));
-  display: flex;
-  align-items: center;
-  background: transparent;
-  border: none;
-  color: var(--r-muted);
-  font-size: 2rem;
-  line-height: 1;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s ease, color 0.2s ease;
-}
-.rd-turn.left  { left: 0;  justify-content: flex-end;   padding-right: 18px; }
-.rd-turn.right { right: 0; justify-content: flex-start; padding-left: 18px; }
-.rd-stage:hover .rd-turn { opacity: 0.55; }
-.rd-turn:hover { opacity: 1 !important; color: var(--r-accent); }
-.rd-turn.off   { visibility: hidden; }
-@media (hover: none) {
-  .rd-turn { display: none; }
 }
 
 /* ─── Contents / bookmarks drawer ──────────────────── */

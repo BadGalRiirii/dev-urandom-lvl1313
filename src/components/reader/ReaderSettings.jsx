@@ -25,7 +25,7 @@ function Segmented({ label, options, value, onChange, className = '' }) {
   )
 }
 
-export default function ReaderSettings({ prefs, canSpread, onChange, onClose }) {
+export default function ReaderSettings({ prefs, onChange, onClose }) {
   const set = (key) => (value) => onChange({ ...prefs, [key]: value })
   const size = (delta) => set('fontSize')(
     Math.min(FONT_SIZE.max, Math.max(FONT_SIZE.min, prefs.fontSize + delta)))
@@ -96,23 +96,6 @@ export default function ReaderSettings({ prefs, canSpread, onChange, onClose }) 
         onChange={(v) => set('justify')(v === 'justify')}
         options={[['left', 'Left'], ['justify', 'Justified']]}
       />
-
-      <Segmented
-        label="Layout"
-        value={prefs.flow}
-        onChange={set('flow')}
-        options={[['scrolled', 'Scroll'], ['paginated', 'Pages']]}
-      />
-
-      {/* Only offered when the screen is wide enough for two pages */}
-      {canSpread && (
-        <Segmented
-          label="Pages"
-          value={prefs.spread ? 'two' : 'one'}
-          onChange={(v) => set('spread')(v === 'two')}
-          options={[['one', 'One'], ['two', 'Two side by side']]}
-        />
-      )}
     </div>
   )
 }
