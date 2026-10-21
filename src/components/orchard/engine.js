@@ -5,12 +5,20 @@
 import { KINDS, FRUIT_NAMES, buildSprites, drawFlesh } from './fruits'
 
 const GRAVITY      = 1.5     // screen heights per second²
-const SLASH_SPEED  = 0.9     // screen heights per second — slower movement doesn't cut
+const SLASH_SPEED  = 0.7     // screen heights per second — slower movement doesn't cut
 const TRAIL_MS     = 170
 const STROKE_GAP   = 280     // ms between points before it counts as a new stroke (hand tracking can skip a frame or two)
 const COMBO_GAP    = 260     // ms between cuts that still belong to one swipe
 const START_LIVES  = 3
-const LEAD_MS      = 50      // how far ahead of the last hand report the blade may run
+const LEAD_MS      = 70      // how far ahead of the last hand report the hand may run
+const HAND_PAD     = 0.22    // a fingertip cuts this much (× fruit radius) beyond its centre line
+
+// Hand landmarks (MediaPipe numbering): 0 wrist, 4/8/12/16/20 thumb→little fingertips
+const TIPS  = [4, 8, 12, 16, 20]
+const PALM  = 9
+const BONES = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [5, 9], [9, 10], [10, 11], [11, 12],
+               [9, 13], [13, 14], [14, 15], [15, 16], [13, 17], [17, 18], [18, 19], [19, 20], [0, 17]]
+const PALM_RING = [0, 1, 5, 9, 13, 17]
 
 const rand  = (a, b) => a + Math.random() * (b - a)
 const pick  = (arr) => arr[Math.floor(Math.random() * arr.length)]
@@ -35,7 +43,7 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
   let mode   = 'idle'        // idle (just the blade) | play | over
   let paused = false
   let items = [], halves = [], drops = [], popups = [], queue = []
-  let trail = [], cursor = null, hand = null
+  let cursor = null, hand = null
   let fadeWait = 0, fps = 60, fpsFrames = 0, fpsSince = performance.now()
   let score = 0, lives = START_LIVES, elapsed = 0, nextWave = 0
   let combo = 0, lastCut = 0, flash = 0, shake = 0
@@ -162,11 +170,21 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
     }
   }
 
-  /* ── Blade input (screen px) ──────────────────────── */
-  // One step of the blade: extends the trail and cuts whatever the step crosses
-  function step(x, y, now) {
+  /* ── Blades ───────────────────────────────────────── */
+  // A blade is anything that cuts: the mouse or a finger on the screen, or each
+  // fingertip of a tracked hand. Each keeps its own short trail.
+  const blades = new Map()
+  const bladeTrail = (id) => {
+    let t = blades.get(id)
+    if (!t) blades.set(id, (t = []))
+    return t
+  }
+
+  // One step of a blade: extends its trail and cuts whatever the step crosses.
+  // pad widens the blade — a hand is thicker than a mouse pointer.
+  function step(id, x, y, now, pad = 0) {
+    const trail = bladeTrail(id)
     const prev = trail[trail.length - 1]
-    cursor = { x, y }
     trail.push({ x, y, t: now })
     if (!prev || now - prev.t > STROKE_GAP || mode !== 'play' || paused) return
     const dt = (now - prev.t) / 1000 || 0.001
@@ -174,40 +192,47 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
     if (dist / dt < SLASH_SPEED * H) return
     const angle = Math.atan2(y - prev.y, x - prev.x)
     for (const it of items) {
-      if (!it.dead && segDist(it.x, it.y, prev.x, prev.y, x, y) <= it.r * 0.95) cut(it, angle, now)
+      if (!it.dead && segDist(it.x, it.y, prev.x, prev.y, x, y) <= it.r * 0.95 + pad) cut(it, angle, now)
     }
   }
 
-  // Mouse / finger: points arrive every frame anyway
+  // Mouse / finger on the screen: points arrive every frame anyway
   function point(x, y) {
     hand = null
-    step(x, y, performance.now())
+    cursor = { x, y }
+    step('pointer', x, y, performance.now())
   }
 
-  // Hand tracking reports the fingertip only 15–30 times a second, and a little
-  // late. Between reports the blade carries on along its current path (at most
-  // LEAD_MS ahead), so it moves every frame and keeps up with the real hand.
-  function aim(x, y) {
+  // A tracked hand: 21 points (wrist, knuckles, joints, fingertips) arriving
+  // 15–30 times a second, a little late. Every fingertip cuts. Between reports
+  // the whole hand carries on along its path, easing to a stop LEAD_MS ahead, so
+  // it moves every frame — and a slash the camera blurred still reaches its end.
+  function aimHand(pts) {
     const now = performance.now()
+    const palm = pts[PALM]
     if (hand && now - hand.t < STROKE_GAP) {
       const dt = Math.max(0.008, (now - hand.t) / 1000)
-      hand.vx = hand.vx * 0.4 + ((x - hand.x) / dt) * 0.6
-      hand.vy = hand.vy * 0.4 + ((y - hand.y) / dt) * 0.6
-      Object.assign(hand, { x, y, t: now })
+      hand.vx = hand.vx * 0.4 + ((palm.x - hand.pts[PALM].x) / dt) * 0.6
+      hand.vy = hand.vy * 0.4 + ((palm.y - hand.pts[PALM].y) / dt) * 0.6
     } else {
-      hand = { x, y, t: now, vx: 0, vy: 0 }
+      hand = { vx: 0, vy: 0 }
     }
-    step(x, y, now)
+    Object.assign(hand, { pts, t: now, dx: 0, dy: 0 })
+    for (const i of TIPS) step(`tip${i}`, pts[i].x, pts[i].y, now, R * HAND_PAD)
   }
 
   function predict(now) {
     if (!hand) return
     const ahead = now - hand.t
+    if (ahead > STROKE_GAP) { hand = null; return }
     if (ahead <= 4 || ahead > LEAD_MS) return
-    step(hand.x + (hand.vx * ahead) / 1000, hand.y + (hand.vy * ahead) / 1000, now)
+    const s = (ahead / 1000) * (1 - ahead / (2 * LEAD_MS))   // full speed at first, easing to a stop
+    hand.dx = hand.vx * s
+    hand.dy = hand.vy * s
+    for (const i of TIPS) step(`tip${i}`, hand.pts[i].x + hand.dx, hand.pts[i].y + hand.dy, now, R * HAND_PAD)
   }
 
-  function lift() { trail = []; cursor = null; hand = null }
+  function lift() { blades.clear(); cursor = null; hand = null }
 
   /* ── Frame ────────────────────────────────────────── */
   function update(dt, now) {
@@ -238,7 +263,11 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
     drops = drops.filter((d) => d.life > 0)
     for (const p of popups) p.t += dt
     popups = popups.filter((p) => p.t < (p.big ? 1.6 : 0.8))
-    trail = trail.filter((p) => now - p.t < TRAIL_MS)
+    for (const [id, trail] of blades) {
+      const kept = trail.filter((p) => now - p.t < TRAIL_MS)
+      if (kept.length) blades.set(id, kept)
+      else blades.delete(id)
+    }
     settleCombo(now)
     flash = Math.max(0, flash - dt * 2.2)
     shake = Math.max(0, shake - dt * 40)
@@ -264,39 +293,80 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
     ctx.restore()
   }
 
-  function drawTrail(now) {
-    if (trail.length > 1) {
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
+  function drawTrails(now) {
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    for (const [id, trail] of blades) {
+      if (trail.length < 2) continue
+      const w = id === 'pointer' || id === 'tip8' ? 1 : 0.6     // the index finger leads
       for (let pass = 0; pass < 2; pass++) {
         for (let i = 1; i < trail.length; i++) {
           const a = trail[i - 1], b = trail[i]
-          const age  = 1 - (now - b.t) / TRAIL_MS
+          const age   = 1 - (now - b.t) / TRAIL_MS
           const taper = i / trail.length
           ctx.beginPath()
           ctx.moveTo(a.x, a.y)
           ctx.lineTo(b.x, b.y)
           if (pass === 0) {
             ctx.strokeStyle = `rgba(201, 168, 71, ${0.22 * age})`
-            ctx.lineWidth = 2 + 16 * taper
+            ctx.lineWidth = (2 + 16 * taper) * w
           } else {
             ctx.strokeStyle = `rgba(255, 240, 200, ${0.95 * age})`
-            ctx.lineWidth = 1 + 5 * taper
+            ctx.lineWidth = (1 + 5 * taper) * w
           }
           ctx.stroke()
         }
       }
     }
-    if (cursor) {
-      const g = ctx.createRadialGradient(cursor.x, cursor.y, 0, cursor.x, cursor.y, 22)
-      g.addColorStop(0, 'rgba(255, 240, 200, 0.95)')
-      g.addColorStop(0.3, 'rgba(201, 168, 71, 0.55)')
-      g.addColorStop(1, 'rgba(201, 168, 71, 0)')
-      ctx.fillStyle = g
+    if (cursor) glow(cursor.x, cursor.y, 22, 1)
+  }
+
+  function glow(x, y, r, strength) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r)
+    g.addColorStop(0, `rgba(255, 240, 200, ${0.95 * strength})`)
+    g.addColorStop(0.3, `rgba(201, 168, 71, ${0.55 * strength})`)
+    g.addColorStop(1, 'rgba(201, 168, 71, 0)')
+    ctx.fillStyle = g
+    ctx.beginPath()
+    ctx.arc(x, y, r, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  // The tracked hand, gilded: a faint gold palm, ink-and-gold bones like the
+  // fruit outlines, and a pearl of light on every fingertip (they all cut)
+  function drawHand(now) {
+    if (!hand) return
+    const age = now - hand.t
+    const alpha = age < 120 ? 1 : Math.max(0, 1 - (age - 120) / 160)   // fades if the camera loses it
+    if (!alpha) return
+    const P = hand.pts.map((p) => ({ x: p.x + hand.dx, y: p.y + hand.dy }))
+    ctx.save()
+    ctx.globalAlpha = alpha
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+
+    ctx.beginPath()
+    PALM_RING.forEach((i, k) => (k ? ctx.lineTo(P[i].x, P[i].y) : ctx.moveTo(P[i].x, P[i].y)))
+    ctx.closePath()
+    ctx.fillStyle = 'rgba(201, 168, 71, 0.10)'
+    ctx.fill()
+
+    for (const [width, colour] of [[R * 0.17, 'rgba(10, 6, 2, 0.45)'], [R * 0.07, 'rgba(214, 184, 96, 0.9)']]) {
       ctx.beginPath()
-      ctx.arc(cursor.x, cursor.y, 22, 0, Math.PI * 2)
+      for (const [a, b] of BONES) { ctx.moveTo(P[a].x, P[a].y); ctx.lineTo(P[b].x, P[b].y) }
+      ctx.lineWidth = Math.max(1.5, width)
+      ctx.strokeStyle = colour
+      ctx.stroke()
+    }
+    ctx.fillStyle = 'rgba(243, 220, 147, 0.9)'
+    for (let i = 0; i < P.length; i++) {
+      if (TIPS.includes(i)) continue
+      ctx.beginPath()
+      ctx.arc(P[i].x, P[i].y, Math.max(2, R * 0.05), 0, Math.PI * 2)
       ctx.fill()
     }
+    for (const i of TIPS) glow(P[i].x, P[i].y, R * (i === 8 ? 0.45 : 0.32), i === 8 ? 1 : 0.8)
+    ctx.restore()
   }
 
   function draw(now) {
@@ -345,7 +415,8 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
       ctx.shadowBlur = 0
     }
     ctx.globalAlpha = 1
-    drawTrail(now)
+    drawTrails(now)
+    drawHand(now)
 
     if (flash > 0) {
       ctx.setTransform(1, 0, 0, 1, 0, 0)
@@ -370,7 +441,7 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
   return {
     resize,
     point,
-    aim,
+    aimHand,
     lift,
     start() {
       items = []; halves = []; drops = []; popups = []; queue = []

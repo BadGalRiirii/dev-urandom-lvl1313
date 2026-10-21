@@ -1,10 +1,9 @@
 // Runs the hand tracker off the main thread, so finding the hand in a camera frame
-// never holds up drawing the game. Frames arrive as ImageBitmaps; the fingertip
-// goes back.
+// never holds up drawing the game. Frames arrive as ImageBitmaps; the hand's 21
+// points go back.
 
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision'
 
-const INDEX_TIP = 8
 let tracker = null
 
 const make = (files, model, delegate) => HandLandmarker.createFromOptions(files, {
@@ -38,13 +37,12 @@ self.onmessage = async ({ data }) => {
 
   if (data.type === 'frame') {
     const started = performance.now()
-    let tip = null
+    let points = null
     try {
-      const res = tracker.detectForVideo(data.bitmap, data.t)
-      const p = res.landmarks?.[0]?.[INDEX_TIP]
-      if (p) tip = { x: 1 - p.x, y: p.y }   // mirrored, so it moves the way you do
+      const hand = tracker.detectForVideo(data.bitmap, data.t).landmarks?.[0]
+      if (hand) points = hand.map((p) => ({ x: 1 - p.x, y: p.y }))   // mirrored, so it moves the way you do
     } catch { /* a bad frame — the next one will do */ }
     data.bitmap.close()
-    self.postMessage({ type: 'tip', tip, t: data.t, ms: performance.now() - started })
+    self.postMessage({ type: 'hand', points, t: data.t, ms: performance.now() - started })
   }
 }

@@ -9,7 +9,6 @@ const MEDIAPIPE = '1.0.1'   // keep in step with @mediapipe/tasks-vision in pack
 const WASM_URL  = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MEDIAPIPE}/wasm`
 const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
 
-const INDEX_TIP = 8
 // The model looks at a ~200px picture anyway, so send it a small one: less to copy
 const FRAME_W = 384
 const FRAME_H = 288
@@ -38,7 +37,7 @@ function workerTracker() {
       } else if (data.type === 'error') {
         clearTimeout(timer)
         fail(data.message)
-      } else if (data.type === 'tip') {
+      } else if (data.type === 'hand') {
         pending?.(data)
         pending = null
       }
@@ -66,13 +65,13 @@ async function pageTracker() {
     delegate,
     async detect(bitmap, t) {
       const started = performance.now()
-      let tip = null
+      let points = null
       try {
-        const p = tracker.detectForVideo(bitmap, t).landmarks?.[0]?.[INDEX_TIP]
-        if (p) tip = { x: 1 - p.x, y: p.y }
+        const hand = tracker.detectForVideo(bitmap, t).landmarks?.[0]
+        if (hand) points = hand.map((p) => ({ x: 1 - p.x, y: p.y }))
       } catch { /* skip the frame */ }
       bitmap.close()
-      return { tip, t, ms: performance.now() - started }
+      return { points, t, ms: performance.now() - started }
     },
     close: () => tracker.close(),
   }
@@ -108,8 +107,9 @@ export function stopCamera(stream) {
 
 // Sends every new camera frame to the tracker — the newest one only: if it's
 // still busy, frames are skipped rather than queued, so it never falls behind.
-// onTip({ x, y } | null, capturedAt) with x/y 0..1; onStats({ cameraFps, trackerFps, trackerMs }).
-export function trackFingertip(video, tracker, onTip, onStats) {
+// onHand(points | null, capturedAt): the hand's 21 points, x/y 0..1 of the picture;
+// onStats({ cameraFps, trackerFps, trackerMs }).
+export function trackHand(video, tracker, onHand, onStats) {
   let stopped = false
   let busy = false
   let lastTime = -1
@@ -127,7 +127,7 @@ export function trackFingertip(video, tracker, onTip, onStats) {
       if (stopped) return
       stats.detections++
       stats.ms += res.ms
-      onTip(res.tip, t)
+      onHand(res.points, t)
     } catch { /* camera not ready yet */ }
     busy = false
   }

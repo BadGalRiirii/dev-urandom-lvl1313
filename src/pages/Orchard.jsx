@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { createOrchard } from '../components/orchard/engine'
 import { createSound } from '../components/orchard/sound'
-import { loadHandTracker, startCamera, stopCamera, trackFingertip } from '../components/orchard/handTracker'
+import { loadHandTracker, startCamera, stopCamera, trackHand } from '../components/orchard/handTracker'
 import { oneEuro } from '../components/orchard/oneEuro'
 import './Orchard.css'
 
@@ -82,8 +82,8 @@ export default function Orchard() {
   const soundRef   = useRef(null)
   const streamRef  = useRef(null)
   const untrackRef = useRef(null)
-  const tipRef     = useRef(null)
-  const filterRef  = useRef({ x: oneEuro(), y: oneEuro() })
+  const handRef    = useRef(null)    // the hand on screen, or null
+  const filtersRef = useRef(Array.from({ length: 21 }, () => ({ x: oneEuro(), y: oneEuro() })))
   const slowRef    = useRef(0)       // seconds in a row the camera has been slow
   const seenRef    = useRef(0)       // when the hand came into view (raise phase)
   const lostRef    = useRef(0)       // when the hand went out of view
@@ -162,32 +162,32 @@ export default function Orchard() {
     }, 800)
   }, [setPhase])
 
-  /* ── Hand: fingertip → blade ──────────────────────── */
-  const onTip = useCallback((tip, at) => {
+  /* ── Hand: all 21 points → the gilded hand, every fingertip a blade ── */
+  const onHand = useCallback((points, at) => {
     const engine = engineRef.current
     const canvas = canvasRef.current
     if (!engine || !canvas) return
-    if (!tip) {
+    if (!points) {
       const now = performance.now()
       if (!lostRef.current) lostRef.current = now
-      if (now - lostRef.current > LOST_MS && tipRef.current) {
-        tipRef.current = null
+      if (now - lostRef.current > LOST_MS && handRef.current) {
+        handRef.current = null
         seenRef.current = 0
-        filterRef.current.x.reset()
-        filterRef.current.y.reset()
+        filtersRef.current.forEach((f) => { f.x.reset(); f.y.reset() })
         engine.lift()
         setHandSeen(false)
       }
       return
     }
     lostRef.current = 0
-    // steady when still, no lag when slashing
-    const fx = filterRef.current.x.filter(tip.x, at)
-    const fy = filterRef.current.y.filter(tip.y, at)
+    // each point steadied when still, untouched when slashing
     const box = cameraBox(videoRef.current, canvas.clientWidth, canvas.clientHeight)
-    const p = { x: box.left + fx * box.width, y: box.top + fy * box.height }
-    tipRef.current = p
-    engine.aim(p.x, p.y)
+    const hand = points.map((p, i) => ({
+      x: box.left + filtersRef.current[i].x.filter(p.x, at) * box.width,
+      y: box.top + filtersRef.current[i].y.filter(p.y, at) * box.height,
+    }))
+    handRef.current = hand
+    engine.aimHand(hand)
     setHandSeen(true)
 
     if (phaseRef.current === 'raise') {
@@ -213,7 +213,7 @@ export default function Orchard() {
     try {
       const tracker = await loadHandTracker()
       untrackRef.current?.()
-      untrackRef.current = trackFingertip(videoRef.current, tracker, onTip, (s) => {
+      untrackRef.current = trackHand(videoRef.current, tracker, onHand, (s) => {
         setStats({ ...s, where: tracker.where, delegate: tracker.delegate, fps: engineRef.current?.fps })
         // A dim room makes laptop cameras slow down to let more light in — and
         // fewer frames means a laggier blade. Say so, rather than leave it a mystery.
@@ -342,7 +342,7 @@ export default function Orchard() {
           <p className="orch-lede">
             {phone
               ? 'Fruit is thrown up from below — swipe your finger across it to slice. Spare the scarabs.'
-              : 'Raise a hand to your camera: your index finger is the blade. Fruit is thrown up from below — slash through it, and spare the scarabs.'}
+              : 'Raise a hand to your camera — your whole hand is the blade, every fingertip cuts. Fruit is thrown up from below: slash through it, and spare the scarabs.'}
           </p>
           <ul className="orch-rules">
             <li><b>✦ ✦ ✦</b> three lives — a fruit that falls unsliced costs one, and so does a scarab</li>
@@ -381,8 +381,8 @@ export default function Orchard() {
           <span className="orch-chapter">Ready</span>
           <h2 className="orch-title small">{handSeen ? 'Hold it there…' : 'Raise your hand'}</h2>
           <p className="orch-lede">
-            Stand back a little so your hand fits in the picture, palm to the camera, index finger up.
-            The gold light follows your fingertip.
+            Sit back a little so your whole hand fits in the picture, palm to the camera, fingers
+            spread. Your hand appears in gold — every fingertip cuts.
           </p>
           <button className="orch-link" onClick={playWithPointer}>Use the mouse instead</button>
         </div>
