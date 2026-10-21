@@ -68,8 +68,10 @@ export function buildBookCss(prefs, flow) {
   const rules = {
     'html': {
       'background': `${t.bg} !important`,
-      // Sideways swipes turn pages — don't let the browser treat them as back/forward
-      'overscroll-behavior': 'none',
+      // Sideways swipes turn pages — don't let the browser treat them as back/forward.
+      // Only sideways: blocking vertical too stops the scroll reaching the box around
+      // the frame, and then the book can't be scrolled at all.
+      'overscroll-behavior-x': 'none',
       ...(flow === 'paginated' ? { 'touch-action': 'pan-y pinch-zoom' } : {}),
     },
     'body': {
@@ -98,7 +100,8 @@ export function buildBookCss(prefs, flow) {
       'orphans': '2', 'widows': '2',
     },
     'h1, h2, h3, h4, h5, h6': { 'line-height': '1.25 !important', 'color': `${t.accent} !important`, ...font },
-    'a, a *': { 'color': `${t.accent} !important` },
+    // Real links only — some books wrap whole chapters in a bare <a id>
+    'a[href], a[href] *': { 'color': `${t.accent} !important` },
     'img, svg, video': { 'max-width': '100% !important', 'height': 'auto !important' },
     'img': { 'display': 'block', 'margin': '1.5em auto' },
     '::selection': { 'background': `${t.accent}55` },

@@ -516,16 +516,6 @@
   color: var(--r-muted);
 }
 
-/* ─── Page-flip (pages mode) ───────────────────────── */
-.flip-exit-left   { animation: rd-out-l 0.18s ease-in  both; }
-.flip-exit-right  { animation: rd-out-r 0.18s ease-in  both; }
-.flip-enter-right { animation: rd-in-r  0.26s ease-out both; }
-.flip-enter-left  { animation: rd-in-l  0.26s ease-out both; }
-@keyframes rd-out-l { to   { transform: translate3d(-3%, 0, 0); opacity: 0; } }
-@keyframes rd-out-r { to   { transform: translate3d(3%, 0, 0);  opacity: 0; } }
-@keyframes rd-in-r  { from { transform: translate3d(3%, 0, 0);  opacity: 0; } }
-@keyframes rd-in-l  { from { transform: translate3d(-3%, 0, 0); opacity: 0; } }
-
 @media (prefers-reduced-motion: reduce) {
   .epub-reader *, .epub-reader *::before { animation: none !important; transition: none !important; }
 }

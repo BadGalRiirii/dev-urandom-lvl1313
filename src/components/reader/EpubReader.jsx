@@ -30,6 +30,19 @@ const findLabel = (toc, href) => {
   return ''
 }
 
+// A chapter is often split over several files and only the first is in the contents,
+// so walk back through the spine to the nearest file that has a name
+const chapterName = (book, href) => {
+  const toc = book.navigation?.toc
+  const at  = book.spine.get(href)?.index
+  if (!toc?.length || at === undefined) return findLabel(toc, href)
+  for (let i = at; i >= 0; i--) {
+    const label = findLabel(toc, book.spine.get(i)?.href)
+    if (label) return label
+  }
+  return ''
+}
+
 function TocRow({ item, current, onPick, depth }) {
   const label = item.label?.trim() || ''
   return (
@@ -62,6 +75,22 @@ const chapterPages = (rend) => {
   return { page, total }
 }
 
+// Settings that change where the words fall (theme only recolours)
+const REFLOW_PREFS = ['font', 'fontSize', 'spacing', 'width', 'justify']
+
+// Scroll mode: note how far through the chapter on screen you are, and return a
+// function that puts you back there once the text has reflowed
+const holdScrollPlace = (manager) => {
+  const box  = manager?.container
+  const topOf = (v) => v.element.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop
+  const view = box && manager.views.all().find((v) => topOf(v) + v.element.offsetHeight > box.scrollTop)
+  if (!view) return () => {}
+  const ratio = (box.scrollTop - topOf(view)) / (view.element.offsetHeight || 1)
+  return () => {
+    if (view.element.isConnected) box.scrollTop = topOf(view) + ratio * view.element.offsetHeight
+  }
+}
+
 const pagesLeftLabel = (info) => {
   if (!info) return ''
   const left = info.total - info.page
@@ -87,7 +116,7 @@ export default function EpubReader({ url, bookId, title: initialTitle = '', onPr
   const bookRef      = useRef(null)
   const rendRef      = useRef(null)
   const cfiRef       = useRef(null)
-  const animRef      = useRef(false)
+  const turningRef   = useRef(false)
   const idleRef      = useRef(null)
   const overBarRef   = useRef(false)
   const touchRef     = useRef(null)
@@ -106,7 +135,6 @@ export default function EpubReader({ url, bookId, title: initialTitle = '', onPr
   const [atStart,   setAtStart]   = useState(true)
   const [atEnd,     setAtEnd]     = useState(false)
   const [pageInfo,  setPageInfo]  = useState(null)
-  const [flipCls,   setFlipCls]   = useState('')
   const [chapter,   setChapter]   = useState('')
   const [bookTitle, setBookTitle] = useState(initialTitle)
   const [toc,       setToc]       = useState([])
@@ -175,20 +203,24 @@ export default function EpubReader({ url, bookId, title: initialTitle = '', onPr
   }, [onProgress])
 
   /* ── Page turning ─────────────────────────────────── */
-  const go = useCallback((dir) => {
+  // The page changes at once; the little slide-in plays afterwards and never holds up
+  // the next tap. Only a turn that's still loading the next chapter blocks another.
+  const go = useCallback(async (dir) => {
     const rend = rendRef.current
-    if (!rend || animRef.current) return
-    const turn = () => (dir === 'next' ? rend.next() : rend.prev())
-    if (flowRef.current !== 'paginated' || reducedMotion()) { turn(); return }
-    animRef.current = true
-    setFlipCls(dir === 'next' ? 'flip-exit-left' : 'flip-exit-right')
-    setTimeout(async () => {
-      try {
-        await turn()
-      } catch { /* couldn't turn (e.g. end of book): just settle back */ }
-      setFlipCls(dir === 'next' ? 'flip-enter-right' : 'flip-enter-left')
-      setTimeout(() => { setFlipCls(''); animRef.current = false }, 260)
-    }, 180)
+    if (!rend || turningRef.current) return
+    turningRef.current = true
+    try {
+      // epub.js can leave a turn hanging (busy loading a chapter); never let that
+      // lock every turn after it
+      await Promise.race([dir === 'next' ? rend.next() : rend.prev(), new Promise((r) => setTimeout(r, 900))])
+    } catch { /* couldn't turn (e.g. end of book): stay put */ }
+    turningRef.current = false
+    if (flowRef.current === 'paginated' && !reducedMotion()) {
+      const shift = dir === 'next' ? '14px' : '-14px'
+      containerRef.current?.animate(
+        [{ opacity: 0.55, transform: `translate3d(${shift},0,0)` }, { opacity: 1, transform: 'none' }],
+        { duration: 170, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' })
+    }
   }, [])
 
   const closePanels = useCallback(() => { setDrawer(null); setSettings(false) }, [])
@@ -228,7 +260,8 @@ export default function EpubReader({ url, bookId, title: initialTitle = '', onPr
 
   const handleTap = useCallback((e, clientX, isTouch) => {
     if (e.view?.getSelection?.().toString()) return        // selecting text
-    if (e.target?.closest?.('a')) return                    // following a link
+    // Following a link. Only real ones: some books wrap whole chapters in a bare <a>
+    if (e.target?.closest?.('a[href]')) return
     if (panelOpenRef.current) { closePanels(); return }
     const x = tapPosition(e, clientX)
     if (flowRef.current === 'paginated') {
@@ -273,7 +306,7 @@ export default function EpubReader({ url, bookId, title: initialTitle = '', onPr
       setAtEnd(!!loc.atEnd)
       setPageInfo(flowRef.current === 'paginated' ? chapterPages(rend) : null)
       updateProgress(cfi)
-      if (loc.start?.href) setChapter(findLabel(book.navigation?.toc, loc.start.href))
+      if (loc.start?.href) setChapter(chapterName(book, loc.start.href))
     })
 
     rend.on('keydown', onKey)
@@ -301,11 +334,27 @@ export default function EpubReader({ url, bookId, title: initialTitle = '', onPr
 
     await rend.display(at ?? undefined)
 
-    // Scroll mode on touch screens: tuck the bars away while scrolling down the page
-    const scroller = rend.manager?.container
+    const manager  = rend.manager
+    const scroller = manager?.container
     if (flow === 'scrolled' && scroller) {
+      // epub.js only loads the next chapter from inside its own scroll handler, and it
+      // swallows the first scroll after opening. If the opening chapter is short (a
+      // cover), that first scroll is also the last, and the book stops there. So ask it
+      // to look for more whenever we scroll or a chapter settles to its real height.
+      let queued = false
+      const fill = () => {
+        if (queued || rendRef.current !== rend) return
+        queued = true
+        manager.q.enqueue(() => { queued = false; return manager.check() })
+      }
+      manager.ignore = false
+      manager.on('resize', fill)
+      fill()
+
+      // Touch screens: tuck the bars away while scrolling down the page
       scrollTopRef.current = scroller.scrollTop
       scroller.addEventListener('scroll', () => {
+        fill()
         const dy = scroller.scrollTop - scrollTopRef.current
         scrollTopRef.current = scroller.scrollTop
         if (canHover() || panelOpenRef.current || Math.abs(dy) < 8) return
@@ -384,11 +433,12 @@ export default function EpubReader({ url, bookId, title: initialTitle = '', onPr
     setJumping(false)
   }, [closePanels])
 
-  const firstPrefs = useRef(true)
+  const prevPrefs = useRef(prefs)
   useEffect(() => {
-    if (firstPrefs.current) { firstPrefs.current = false; return }
+    const before = prevPrefs.current
+    prevPrefs.current = prefs
     const rend = rendRef.current
-    if (!rend) return
+    if (before === prefs || !rend) return
     const at = cfiRef.current
     if (prefs.flow !== flowRef.current) {
       // Switching scroll <-> pages needs a fresh rendition, at the same place
@@ -399,8 +449,24 @@ export default function EpubReader({ url, bookId, title: initialTitle = '', onPr
       }, 180)
       return () => clearTimeout(t)
     }
+
+    // Just the colours: nothing moves
+    if (!REFLOW_PREFS.some((k) => before[k] !== prefs[k])) { applyBookCss(rend); return }
+
+    if (flowRef.current === 'scrolled') {
+      // Text reflows in place; keep the same spot in the chapter on screen while the
+      // chapters settle to their new heights (rebuilding them would flash and drift)
+      const manager = rend.manager
+      const restore = holdScrollPlace(manager)
+      applyBookCss(rend)
+      manager.on('resize', restore)
+      const raf = requestAnimationFrame(restore)
+      const t   = setTimeout(() => manager.off('resize', restore), 1500)
+      return () => { cancelAnimationFrame(raf); clearTimeout(t); manager.off('resize', restore) }
+    }
+
+    // Pages: the page breaks all move, so re-open at the same sentence
     applyBookCss(rend)
-    // Text reflows after a style change — re-anchor so you stay on the same sentence
     const t = setTimeout(() => { if (at) rendRef.current?.display(at).catch(() => {}) }, 120)
     return () => clearTimeout(t)
   }, [prefs, renderBook, applyBookCss])
@@ -536,7 +602,7 @@ export default function EpubReader({ url, bookId, title: initialTitle = '', onPr
             <button className={`rd-turn right${atEnd ? ' off' : ''}`} onClick={() => go('next')} aria-label="Next page">›</button>
           </>
         )}
-        <div className={`rd-book${flipCls ? ` ${flipCls}` : ''}${jumping ? ' jumping' : ''}`} ref={containerRef} />
+        <div className={`rd-book${jumping ? ' jumping' : ''}`} ref={containerRef} />
 
         {loading && (
           <div className="rd-loading">
