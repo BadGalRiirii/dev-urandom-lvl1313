@@ -4,7 +4,6 @@ import ReaderToolbar from '../components/reader/ReaderToolbar'
 import EpubReader from '../components/reader/EpubReader'
 import PdfReader from '../components/reader/PdfReader'
 import { getBook } from '../lib/api'
-import { supabase } from '../lib/supabase'
 import './Read.css'
 
 const READER_MODES = {
@@ -47,15 +46,6 @@ export default function Read() {
       .finally(() => setLoading(false))
   }, [id])
 
-  useEffect(() => {
-    if (!book || !progress) return
-    const t = setTimeout(() => {
-      supabase.from('books').update({ progress, current_page: Math.round(progress * (book.total_pages || 100)) })
-        .eq('id', id).then(() => {})
-    }, 2000)
-    return () => clearTimeout(t)
-  }, [progress, book, id])
-
   if (loading) return (
     <div className="read-loading page">
       <div className="skeleton" style={{ height: '80vh', width: '100%' }} />
@@ -70,7 +60,7 @@ export default function Read() {
   )
 
   if (book.file_type === 'epub') return (
-    <EpubReader url={fileUrl} bookId={id} title={book.title} onProgress={setProgress} />
+    <EpubReader url={fileUrl} bookId={id} title={book.title} />
   )
 
   return (

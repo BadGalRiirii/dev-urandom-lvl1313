@@ -105,11 +105,8 @@ create policy "tracks_public_read"     on tracks        for select using (true);
 create policy "highlights_public_read" on highlights    for select using (true);
 create policy "settings_public_read"   on site_settings for select using (true);
 
+-- Visitors can't write anything. Reading position, bookmarks and reader settings
+-- live in each visitor's own browser (localStorage), not here.
 revoke insert, update, delete, truncate
   on books, highlights, posts, site_settings, tracks
   from anon, authenticated;
-
--- The one visitor write: the reader saves how far into a book you are
-create policy "books_progress_update" on books for update to anon, authenticated
-  using (true) with check (true);
-grant update (progress, current_page) on books to anon, authenticated;

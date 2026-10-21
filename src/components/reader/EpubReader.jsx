@@ -109,7 +109,7 @@ function useReaderFonts() {
   }, [])
 }
 
-export default function EpubReader({ url, bookId, title: initialTitle = '', onProgress }) {
+export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
   useReaderFonts()
 
   const containerRef = useRef(null)
@@ -199,8 +199,7 @@ export default function EpubReader({ url, bookId, title: initialTitle = '', onPr
     if (typeof pct !== 'number' || Number.isNaN(pct)) return
     setProgress(pct)
     setHasProgress(true)
-    onProgress?.(pct)
-  }, [onProgress])
+  }, [])
 
   /* ── Page turning ─────────────────────────────────── */
   // The page changes at once; the little slide-in plays afterwards and never holds up
