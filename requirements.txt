@@ -4,7 +4,7 @@ fastapi==0.154.0
 uvicorn[standard]==0.54.0
 python-multipart==0.0.32
 supabase==2.22.4
-python-jose[cryptography]==3.5.0
+PyJWT==2.15.1
 python-dotenv==1.2.4
 aiofiles==25.1.0
 ebooklib==0.20

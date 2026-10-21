@@ -91,6 +91,28 @@ def test_forged_token_is_refused():
     assert r.status_code == 401
 
 
+def test_issued_token_is_accepted_and_others_are_not():
+    from datetime import datetime, timedelta, timezone
+    import jwt
+    from fastapi import HTTPException
+    from fastapi.security import HTTPAuthorizationCredentials
+
+    def check(token):
+        return auth.verify_token(HTTPAuthorizationCredentials(scheme="Bearer", credentials=token))
+
+    assert check(login("correct horse battery").json()["access_token"]) == "admin"
+
+    past = datetime.now(timezone.utc) - timedelta(minutes=1)
+    for bad in (
+        jwt.encode({"sub": "admin", "exp": past}, auth.SECRET_KEY, algorithm="HS256"),     # expired
+        jwt.encode({"sub": "admin"}, "some-other-secret-of-enough-length", algorithm="HS256"),  # wrong key
+        jwt.encode({"sub": "admin"}, None, algorithm="none"),                                # unsigned
+    ):
+        with pytest.raises(HTTPException) as e:
+            check(bad)
+        assert e.value.status_code == 401
+
+
 def test_oversized_upload_refused_before_reading():
     r = client.post("/api/upload/book", content=b"",
                     headers={"Content-Length": str(60 * 1024 * 1024),

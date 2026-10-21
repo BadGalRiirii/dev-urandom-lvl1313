@@ -6,7 +6,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+import jwt
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -77,7 +77,7 @@ def verify_token(creds: HTTPAuthorizationCredentials = Depends(security)) -> str
     try:
         payload = jwt.decode(creds.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         return payload["sub"]
-    except JWTError:
+    except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
