@@ -56,5 +56,18 @@ export function createSound() {
     scarab: () => play(() => { tone(140, 0.45, 0.4, 'sawtooth', 45); noise(0.3, 600, 120, 0.3) }),
     miss:   () => play(() => tone(220, 0.35, 0.12, 'sine', 160)),
     combo:  () => play(() => { tone(880, 0.25, 0.12); tone(1320, 0.35, 0.1, 'triangle', 1320, 0.08) }),
+
+    // The Hourglass
+    tick:   () => play(() => tone(700, 0.04, 0.035, 'triangle')),
+    turn:   () => play(() => tone(520, 0.08, 0.05, 'triangle', 760)),
+    pour:   () => play(() => noise(0.32, 2400, 500, 0.16)),
+    // a rising chime, one note higher for each clear in a row
+    bridge: (chain = 1) => play(() => {
+      const steps = [0, 4, 7, 12, 16, 19, 24]
+      const root = 523.25 * 2 ** (steps[Math.min(chain - 1, steps.length - 1)] / 12)
+      tone(root, 0.5, 0.11); tone(root * 1.5, 0.6, 0.08, 'triangle', root * 1.5, 0.07); tone(root * 2, 0.7, 0.06, 'sine', root * 2, 0.14)
+      noise(0.5, 6000, 2500, 0.06)
+    }),
+    over:   () => play(() => { tone(392, 0.5, 0.12, 'sine', 330); tone(294, 0.9, 0.12, 'sine', 196, 0.3) }),
   }
 }

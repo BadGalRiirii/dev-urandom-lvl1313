@@ -22,6 +22,7 @@ const PAGES = {
   admin:   () => import('./pages/Admin'),
   themes:  () => import('./pages/Themes'),
   orchard: () => import('./pages/Orchard'),
+  hourglass: () => import('./pages/Hourglass'),
 }
 const Home    = lazy(PAGES.home)
 const Library = lazy(PAGES.library)
@@ -32,6 +33,7 @@ const Music   = lazy(PAGES.music)
 const Admin   = lazy(PAGES.admin)
 const Themes  = lazy(PAGES.themes)
 const Orchard = lazy(PAGES.orchard)
+const Hourglass = lazy(PAGES.hourglass)
 
 // Which page chunk the current URL needs, so it can download during the intro
 const pageForPath = (path) => PAGES[path.split('/')[1]] ?? PAGES.home
@@ -63,6 +65,7 @@ const TITLES = {
   '/admin':   'riri/dev/urandom — Admin',
   '/themes':  'riri/dev/urandom — Themes',
   '/orchard': 'riri/dev/urandom — The Orchard',
+  '/hourglass': 'riri/dev/urandom — The Hourglass',
 }
 
 function AppInner() {
@@ -70,7 +73,7 @@ function AppInner() {
   const isRead   = location.pathname.startsWith('/read')
   const isAdmin  = location.pathname.startsWith('/admin')
   const isHome   = location.pathname === '/'
-  const isGame   = location.pathname === '/orchard'   // full screen, no bars
+  const isGame   = ['/orchard', '/hourglass'].includes(location.pathname)   // full screen, no bars
   const showNav  = !isRead && !isAdmin && !isHome && !isGame
 
   useLayoutEffect(() => {
@@ -173,6 +176,7 @@ function AppInner() {
         <Route path="/admin"  element={<Admin />} />
         <Route path="/themes" element={<PageWrapper><Themes /></PageWrapper>} />
         <Route path="/orchard" element={<Orchard />} />
+        <Route path="/hourglass" element={<Hourglass />} />
       </Routes>
       </Suspense>
       </ErrorBoundary>

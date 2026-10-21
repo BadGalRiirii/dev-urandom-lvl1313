@@ -144,8 +144,8 @@
   /* barely peeking: 4px left, 4px taller (rotated) */
   transform: translate(-4px, -4px) rotate(-3.5deg);
   filter: brightness(0.68) saturate(0.72);
-  cursor: not-allowed;
-  pointer-events: none;
+  cursor: pointer;
+  pointer-events: none;   /* reachable once the deck fans out */
 }
 .deck-orchard {
   z-index: 2;
@@ -323,7 +323,7 @@
   .deck-ornament { font-size: 0.5rem; }
 }
 @media (max-width: 767px) and (hover: none) {
-  .hero-deck .deck-game      { transform: translateX(-15px) rotate(-10deg); filter: brightness(0.8) saturate(0.9); }
+  .hero-deck .deck-game      { transform: translateX(-15px) rotate(-10deg); filter: brightness(0.8) saturate(0.9); pointer-events: auto; }
   .hero-deck .deck-orchard    { transform: translateX(85px) rotate(0deg);   filter: brightness(0.88) saturate(0.95); pointer-events: auto; }
   .hero-deck .deck-portfolio { transform: translateX(175px) rotate(8deg); }
 }

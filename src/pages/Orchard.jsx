@@ -4,6 +4,7 @@ import { createOrchard } from '../components/orchard/engine'
 import { createSound } from '../components/orchard/sound'
 import { loadHandTracker, startCamera, stopCamera, trackFinger } from '../components/orchard/handTracker'
 import { createFingertip } from '../components/orchard/fingertip'
+import { Frame, Ornament } from '../components/orchard/Ornaments'
 import './Orchard.css'
 
 const SCORES_KEY = 'riri_orchard_scores'
@@ -43,18 +44,6 @@ const CAMERA_ERRORS = {
   NotReadableError: 'The camera is busy in another app. Close it there and try again — or play with the mouse.',
 }
 
-function Corner({ className }) {
-  return (
-    <svg className={`orch-corner ${className}`} viewBox="0 0 160 160" aria-hidden="true">
-      <path d="M6 154V62C6 30 30 6 62 6h92" />
-      <path className="faint" d="M18 154V72c0-30 24-54 54-54h82" />
-      <path d="M6 62c34 0 56-22 56-56" />
-      <path className="faint" d="M62 62c-16 0-22-15-12-22 9-6 19 3 13 11" />
-      <circle cx="62" cy="62" r="3.2" />
-    </svg>
-  )
-}
-
 // A life: a little gilded lily
 function Lily({ on }) {
   return (
@@ -64,14 +53,6 @@ function Lily({ on }) {
       <path d="M17 21c5-2 10-7 11-14-6 1-10 6-11 13z" />
       <path className="stem" d="M16 22v11M16 29c-3-1-5-3-6-5M16 29c3-1 5-3 6-5" />
     </svg>
-  )
-}
-
-function Ornament() {
-  return (
-    <div className="orch-ornament" aria-hidden="true">
-      <span /><i>❦</i><span />
-    </div>
   )
 }
 
@@ -305,9 +286,7 @@ export default function Orchard() {
       <canvas ref={ghostRef} className="orch-ghost" width={320} height={240} aria-hidden="true" />
       <canvas ref={canvasRef} className={`orch-canvas${mode === 'pointer' ? ' pointer' : ''}`} {...pointer} />
 
-      <div className="orch-frame" aria-hidden="true">
-        <Corner className="tl" /><Corner className="tr" /><Corner className="bl" /><Corner className="br" />
-      </div>
+      <Frame />
 
       {/* ── HUD ── */}
       {inRound && (

@@ -47,17 +47,17 @@ export default function HeroText() {
 
       <motion.div variants={item} className="hero-deck">
 
-        {/* Back — Game Mode */}
-        <button className="deck-card deck-game" aria-disabled="true" tabIndex={-1}>
-          <img src={artnoImg} alt="" className="deck-img" draggable={false} />
+        {/* Back — Game Mode: The Hourglass, falling blocks that crumble into sand */}
+        <Link to="/hourglass" className="deck-card deck-game">
+          <img src={artnoImg} alt="The Hourglass" className="deck-img" draggable={false} />
           <div className="deck-frame" />
           <div className="deck-label">
             <span className="deck-ornament">✦ ✦ ✦</span>
             <span className="deck-title">Game Mode</span>
-            <span className="deck-sub">coming soon</span>
+            <span className="deck-sub">the hourglass · play →</span>
           </div>
           <div className="deck-corona" />
-        </button>
+        </Link>
 
         {/* Middle — Chapter II: The Orchard, the hand-tracking mini game */}
         <Link to="/orchard" className="deck-card deck-orchard">
