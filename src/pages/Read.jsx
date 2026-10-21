@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import ReaderToolbar from '../components/reader/ReaderToolbar'
 import EpubReader from '../components/reader/EpubReader'
 import PdfReader from '../components/reader/PdfReader'
@@ -17,11 +17,25 @@ export default function Read() {
   const [book, setBook] = useState(null)
   const [fileUrl, setFileUrl] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [missing, setMissing] = useState(false)
   const [mode, setMode] = useState('dark')
   const [fontSize, setFontSize] = useState(18)
   const [progress, setProgress] = useState(0)
 
   const themeStyle = READER_MODES[mode]
+
+  // Film grain, scanlines and vignette sit on top of everything — not over book text.
+  // overscroll-behavior stops a sideways page-turn swipe being read by the browser
+  // as "go back/forward", which would throw you out of the book.
+  useEffect(() => {
+    const root = document.documentElement
+    document.body.classList.add('page-read')
+    root.style.overscrollBehavior = 'none'
+    return () => {
+      document.body.classList.remove('page-read')
+      root.style.overscrollBehavior = ''
+    }
+  }, [])
 
   useEffect(() => {
     getBook(id)
@@ -29,7 +43,7 @@ export default function Read() {
         setBook(data)
         if (data.signed_url) setFileUrl(data.signed_url)
       })
-      .catch(() => {})
+      .catch(() => setMissing(true))
       .finally(() => setLoading(false))
   }, [id])
 
@@ -48,6 +62,17 @@ export default function Read() {
     </div>
   )
 
+  if (missing || !book) return (
+    <div className="read-missing">
+      <p className="serif">This book isn&apos;t on the shelf anymore.</p>
+      <Link to="/library" className="pill">Back to the library</Link>
+    </div>
+  )
+
+  if (book.file_type === 'epub') return (
+    <EpubReader url={fileUrl} bookId={id} title={book.title} onProgress={setProgress} />
+  )
+
   return (
     <div className="read-page" style={{ background: themeStyle.bg, color: themeStyle.text }}>
       <ReaderToolbar
@@ -58,22 +83,7 @@ export default function Read() {
         progress={progress}
       />
       <div className="reader-content">
-        {book?.file_type === 'epub' ? (
-          <EpubReader
-            url={fileUrl}
-            bookId={id}
-            fontSize={fontSize}
-            themeStyle={themeStyle}
-            themeMode={mode}
-            onProgress={setProgress}
-          />
-        ) : (
-          <PdfReader
-            url={fileUrl}
-            fontSize={fontSize}
-            onProgress={setProgress}
-          />
-        )}
+        <PdfReader url={fileUrl} fontSize={fontSize} onProgress={setProgress} />
       </div>
     </div>
   )

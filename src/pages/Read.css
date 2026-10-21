@@ -17,6 +17,21 @@
   padding: 80px;
 }
 
+.read-missing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--cream);
+}
+.read-missing .pill { text-decoration: none; }
+
 @media (max-width: 480px) {
   .read-loading { padding: 40px 16px; }
 }

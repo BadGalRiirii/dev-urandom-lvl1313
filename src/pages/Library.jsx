@@ -6,9 +6,9 @@ import liliesImg from '../assets/lilies.jpg'
 import catPaintingImg from '../assets/cat-painting.jpg'
 import './Library.css'
 
-// Each EPUB shelf is one painting split across up to SHELF_SIZE spines, filled in
-// upload order: the first 7 books make the lilies, the next 7 the cat painting.
-// The last painting takes any overflow — add another image here to start a new shelf.
+// Each EPUB shelf is one painting split across exactly SHELF_SIZE spines (fewer only
+// while it's filling up), in upload order: books 1–7 make the lilies, 8–14 the cat
+// painting. Past that the paintings repeat — add an image here to give a shelf its own.
 const SHELF_SIZE = 7
 const PAINTINGS = [
   { image: liliesImg,      title: 'Lilies' },
@@ -17,11 +17,16 @@ const PAINTINGS = [
 
 function toShelves(books) {
   const oldestFirst = [...books].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-  return PAINTINGS.map((painting, i) => {
-    const isLast = i === PAINTINGS.length - 1
-    const shelf  = oldestFirst.slice(i * SHELF_SIZE, isLast ? undefined : (i + 1) * SHELF_SIZE)
-    return { ...painting, books: shelf.reverse() }   // newest first, as the shelf always showed
-  }).filter((shelf) => shelf.books.length > 0)
+  const shelves = []
+  for (let i = 0; i * SHELF_SIZE < oldestFirst.length; i++) {
+    const painting = PAINTINGS[i % PAINTINGS.length]
+    shelves.push({
+      ...painting,
+      key:   `shelf-${i}`,
+      books: oldestFirst.slice(i * SHELF_SIZE, (i + 1) * SHELF_SIZE).reverse(),   // newest first, as before
+    })
+  }
+  return shelves
 }
 
 function MosaicDivider() {
@@ -76,7 +81,7 @@ export default function Library() {
       )}
 
       {!loading && epubShelves.map((shelf, i) => (
-        <Fragment key={shelf.title}>
+        <Fragment key={shelf.key}>
           {i > 0 && <MosaicDivider />}
           <SpineMosaic
             books={shelf.books}

@@ -117,6 +117,14 @@ body.page-journal .light-leak {
   display: none;
 }
 
+/* Reader: nothing drawn on top of book text */
+body.page-read::before,
+body.page-read::after,
+body.page-read .vignette,
+body.page-read .light-leak {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   body::before { animation: none; }
 }

@@ -1,23 +1,20 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
+import ReaderSettings from './ReaderSettings'
+import { THEMES, WIDTHS, FONT_CSS_URL, loadPrefs, savePrefs, buildBookCss } from './readerPrefs'
 import './EpubReader.css'
 
 const storageKey   = (id) => `riri_reader_${id}_cfi`
 const bookmarksKey = (id) => `riri_reader_${id}_bm`
+const locationsKey = (id) => `riri_reader_${id}_locs`
 
-/* ─────────────────────────────────────────────────────
-   Theme builder
-───────────────────────────────────────────────────── */
-const buildTheme = (themeStyle, fontSize) => ({
-  body: {
-    'background':    `${themeStyle.bg} !important`,
-    'color':         `${themeStyle.text} !important`,
-    'font-size':     `${fontSize}px`,
-    'line-height':   '1.9',
-    'padding-right': '5% !important',
-  },
-  img: { 'max-width': '100% !important', 'height': 'auto', 'display': 'block', 'margin': '1.5em auto' },
-  a:   { 'color': themeStyle.accent || themeStyle.text },
-})
+const BOOK_CSS_KEY   = 'riri-reader'
+const CHROME_IDLE_MS = 2800   // desktop: bars fade after this long without the mouse moving
+const SWIPE_PX       = 45
+const PAGE_GAP       = { wide: 56, narrow: 32 }
+
+const canHover      = () => window.matchMedia('(hover: hover)').matches
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const findLabel = (toc, href) => {
   if (!toc?.length || !href) return ''
@@ -33,9 +30,6 @@ const findLabel = (toc, href) => {
   return ''
 }
 
-/* ─────────────────────────────────────────────────────
-   TOC row (recursive)
-───────────────────────────────────────────────────── */
 function TocRow({ item, current, onPick, depth }) {
   const label = item.label?.trim() || ''
   return (
@@ -43,7 +37,7 @@ function TocRow({ item, current, onPick, depth }) {
       {label && (
         <button
           className={`toc-btn${label === current ? ' active' : ''}`}
-          style={{ paddingLeft: `${18 + depth * 14}px` }}
+          style={{ paddingLeft: `${20 + depth * 14}px` }}
           onClick={() => onPick(item.href)}
         >
           {label}
@@ -56,35 +50,103 @@ function TocRow({ item, current, onPick, depth }) {
   )
 }
 
-/* ─────────────────────────────────────────────────────
-   Main component
-───────────────────────────────────────────────────── */
-export default function EpubReader({ url, bookId, fontSize, themeStyle, themeMode = 'dark', onProgress }) {
+// epub.js's own page count drifts when pages have a gap between them (it divides by the
+// page width without the gap), so count from how far the chapter has scrolled sideways
+const chapterPages = (rend) => {
+  const m     = rend?.manager
+  const delta = m?.layout?.delta
+  const view  = m?.views?.first?.()
+  if (!delta || !view) return null
+  const total = Math.max(1, Math.round(view.width() / delta))
+  const page  = Math.min(total, Math.round(m.container.scrollLeft / delta) + 1)
+  return { page, total }
+}
+
+const pagesLeftLabel = (info) => {
+  if (!info) return ''
+  const left = info.total - info.page
+  if (left <= 0) return 'Last page of chapter'
+  return `${left} ${left === 1 ? 'page' : 'pages'} left in chapter`
+}
+
+// The reading fonts, for the settings previews in the page itself
+function useReaderFonts() {
+  useEffect(() => {
+    if (document.querySelector(`link[href="${FONT_CSS_URL}"]`)) return
+    const link = document.createElement('link')
+    link.rel  = 'stylesheet'
+    link.href = FONT_CSS_URL
+    document.head.appendChild(link)
+  }, [])
+}
+
+export default function EpubReader({ url, bookId, title: initialTitle = '', onProgress }) {
+  useReaderFonts()
+
   const containerRef = useRef(null)
   const bookRef      = useRef(null)
   const rendRef      = useRef(null)
   const cfiRef       = useRef(null)
   const animRef      = useRef(false)
-  const modeRef      = useRef('scroll')
+  const idleRef      = useRef(null)
+  const overBarRef   = useRef(false)
+  const touchRef     = useRef(null)
+  const lastTouchRef = useRef(0)
+  const scrollTopRef = useRef(0)
+  const locsReadyRef = useRef(false)   // percentages are only right once the full location map exists
 
-  const [loading,   setLoading]   = useState(false)
+  const [prefs, setPrefs]         = useState(loadPrefs)
+  const prefsRef                  = useRef(prefs)
+  const flowRef                   = useRef(prefs.flow)
+
+  const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
   const [progress,  setProgress]  = useState(0)
+  const [hasProgress, setHasProgress] = useState(false)
   const [atStart,   setAtStart]   = useState(true)
   const [atEnd,     setAtEnd]     = useState(false)
-  const [mode,      setMode]      = useState('scroll')
+  const [pageInfo,  setPageInfo]  = useState(null)
   const [flipCls,   setFlipCls]   = useState('')
   const [chapter,   setChapter]   = useState('')
-  const [bookTitle, setBookTitle] = useState('')
+  const [bookTitle, setBookTitle] = useState(initialTitle)
   const [toc,       setToc]       = useState([])
-  const [tocOpen,   setTocOpen]   = useState(false)
+  const [drawer,    setDrawer]    = useState(null)     // null | 'contents' | 'bookmarks'
+  const [settings,  setSettings]  = useState(false)
+  const [chromeHidden, setChromeHidden] = useState(false)
   const [jumping,   setJumping]   = useState(false)
   const [bookmarks, setBookmarks] = useState([])
-  const [bmOpen,    setBmOpen]    = useState(false)
 
-  modeRef.current = mode
+  prefsRef.current = prefs
+  const panelOpen = drawer !== null || settings
+  const panelOpenRef = useRef(panelOpen)
+  panelOpenRef.current = panelOpen
 
-  /* ── Load bookmarks from localStorage ────────────── */
+  /* ── Bars: fade while reading, come back on mouse/tap ─ */
+  const showChrome = useCallback(() => {
+    setChromeHidden(false)
+    clearTimeout(idleRef.current)
+    if (!canHover()) return
+    idleRef.current = setTimeout(() => {
+      if (!panelOpenRef.current && !overBarRef.current) setChromeHidden(true)
+    }, CHROME_IDLE_MS)
+  }, [])
+
+  // Phones fire fake mouse events right after a tap — those mustn't undo the tap's toggle
+  const onMouseMove = useCallback(() => {
+    if (!canHover() || Date.now() - lastTouchRef.current < 800) return
+    showChrome()
+  }, [showChrome])
+
+  useEffect(() => {
+    showChrome()
+    window.addEventListener('mousemove', onMouseMove)
+    return () => { window.removeEventListener('mousemove', onMouseMove); clearTimeout(idleRef.current) }
+  }, [showChrome, onMouseMove])
+
+  /* ── Preferences ──────────────────────────────────── */
+  useEffect(() => { savePrefs(prefs) }, [prefs])
+
+  /* ── Bookmarks ────────────────────────────────────── */
   useEffect(() => {
     if (!bookId) return
     try {
@@ -101,220 +163,249 @@ export default function EpubReader({ url, bookId, fontSize, themeStyle, themeMod
     }
   }, [bookId])
 
-  const addBookmark = useCallback(() => {
-    if (!cfiRef.current) return
-    const bm = {
-      id:        Date.now(),
-      cfi:       cfiRef.current,
-      chapter:   chapter || bookTitle || '—',
-      pct:       progress,
-      createdAt: new Date().toISOString(),
+  /* ── Progress (needs the book's location map) ─────── */
+  const updateProgress = useCallback((cfi) => {
+    const locs = bookRef.current?.locations
+    if (!cfi || !locs || !locsReadyRef.current) return
+    const pct = locs.percentageFromCfi(cfi)
+    if (typeof pct !== 'number' || Number.isNaN(pct)) return
+    setProgress(pct)
+    setHasProgress(true)
+    onProgress?.(pct)
+  }, [onProgress])
+
+  /* ── Page turning ─────────────────────────────────── */
+  const go = useCallback((dir) => {
+    const rend = rendRef.current
+    if (!rend || animRef.current) return
+    const turn = () => (dir === 'next' ? rend.next() : rend.prev())
+    if (flowRef.current !== 'paginated' || reducedMotion()) { turn(); return }
+    animRef.current = true
+    setFlipCls(dir === 'next' ? 'flip-exit-left' : 'flip-exit-right')
+    setTimeout(async () => {
+      try {
+        await turn()
+      } catch { /* couldn't turn (e.g. end of book): just settle back */ }
+      setFlipCls(dir === 'next' ? 'flip-enter-right' : 'flip-enter-left')
+      setTimeout(() => { setFlipCls(''); animRef.current = false }, 260)
+    }, 180)
+  }, [])
+
+  const closePanels = useCallback(() => { setDrawer(null); setSettings(false) }, [])
+
+  const onKey = useCallback((e) => {
+    if (e.key === 'Escape') { closePanels(); return }
+    if (panelOpenRef.current || e.target?.closest?.('input, textarea, select, button')) return
+    if (flowRef.current !== 'paginated') {
+      // Scroll mode: the scrolling box lives outside the book's frame, so keys pressed
+      // inside the frame wouldn't move it on their own
+      const box = rendRef.current?.manager?.container
+      if (!box) return
+      const step = { ArrowDown: 64, ArrowUp: -64, PageDown: box.clientHeight * 0.9,
+                     PageUp: -box.clientHeight * 0.9, ' ': box.clientHeight * 0.9 }[e.key]
+      if (step === undefined) return
+      e.preventDefault?.()
+      box.scrollBy({ top: e.shiftKey && e.key === ' ' ? -step : step, behavior: reducedMotion() ? 'auto' : 'smooth' })
+      return
     }
-    setBookmarks(prev => {
-      if (prev.some(b => b.cfi === bm.cfi)) return prev
-      const next = [bm, ...prev]
-      persistBookmarks(next)
-      return next
-    })
-  }, [chapter, bookTitle, progress, persistBookmarks])
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault?.(); go('next') }
+    if (['ArrowLeft', 'PageUp'].includes(e.key))         { e.preventDefault?.(); go('prev') }
+  }, [go, closePanels])
 
-  const removeBookmark = useCallback((bmId) => {
-    setBookmarks(prev => {
-      const next = prev.filter(b => b.id !== bmId)
-      persistBookmarks(next)
-      return next
-    })
-  }, [persistBookmarks])
+  useEffect(() => {
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onKey])
 
-  /* ── Wire relocated event ─────────────────────────── */
-  const wireEvents = useCallback((rend) => {
+  // Where a tap/click landed, as a fraction of the reading area's width.
+  // Events come from inside the book's iframe, so offset by the frame's position.
+  const tapPosition = useCallback((e, clientX) => {
+    const frame = e.view?.frameElement
+    const box   = containerRef.current?.getBoundingClientRect()
+    if (!frame || !box?.width) return 0.5
+    return (frame.getBoundingClientRect().left + clientX - box.left) / box.width
+  }, [])
+
+  const handleTap = useCallback((e, clientX, isTouch) => {
+    if (e.view?.getSelection?.().toString()) return        // selecting text
+    if (e.target?.closest?.('a')) return                    // following a link
+    if (panelOpenRef.current) { closePanels(); return }
+    const x = tapPosition(e, clientX)
+    if (flowRef.current === 'paginated') {
+      if (x < 0.3) { go('prev'); return }
+      if (x > 0.7) { go('next'); return }
+    }
+    if (isTouch) setChromeHidden((h) => !h)
+  }, [tapPosition, closePanels, go])
+
+  /* ── Rendering ────────────────────────────────────── */
+  const applyBookCss = useCallback((rend) => {
+    const css = buildBookCss(prefsRef.current, flowRef.current)
+    rend.getContents().forEach((c) => c.addStylesheetCss(css, BOOK_CSS_KEY))
+  }, [])
+
+  const renderBook = useCallback(async (flow, at) => {
+    const book = bookRef.current
+    const el   = containerRef.current
+    if (!book || !el) return
+
+    rendRef.current?.destroy()
+    flowRef.current = flow
+    const narrow = el.offsetWidth < 600
+    const rend = book.renderTo(el, flow === 'scrolled'
+      ? { width: el.offsetWidth, height: el.offsetHeight, flow: 'scrolled', manager: 'continuous' }
+      : { width: el.offsetWidth, height: el.offsetHeight, flow: 'paginated', spread: 'none',
+          gap: narrow ? PAGE_GAP.narrow : PAGE_GAP.wide })
+    rendRef.current = rend
+
+    rend.hooks.content.register((contents) => {
+      contents.addStylesheet(FONT_CSS_URL)
+      contents.addStylesheetCss(buildBookCss(prefsRef.current, flowRef.current), BOOK_CSS_KEY)
+    })
+
     rend.on('relocated', (loc) => {
       const cfi = loc.start?.cfi ?? null
       cfiRef.current = cfi
       if (bookId && cfi) {
         try { localStorage.setItem(storageKey(bookId), cfi) } catch { /* storage blocked: position won't persist */ }
       }
-      setAtStart(loc.atStart ?? false)
-      setAtEnd(loc.atEnd   ?? false)
-      const pct = loc.start?.percentage ?? 0
-      setProgress(pct)
-      onProgress?.(pct)
-      if (loc.start?.href && bookRef.current) {
-        setChapter(findLabel(bookRef.current.navigation?.toc, loc.start.href))
+      setAtStart(!!loc.atStart)
+      setAtEnd(!!loc.atEnd)
+      setPageInfo(flowRef.current === 'paginated' ? chapterPages(rend) : null)
+      updateProgress(cfi)
+      if (loc.start?.href) setChapter(findLabel(book.navigation?.toc, loc.start.href))
+    })
+
+    rend.on('keydown', onKey)
+    rend.on('mousemove', onMouseMove)
+    rend.on('click', (e) => {
+      if (Date.now() - lastTouchRef.current < 600) return   // already handled as a touch
+      handleTap(e, e.clientX, false)
+    })
+    rend.on('touchstart', (e) => {
+      const t = e.changedTouches?.[0]
+      if (t) touchRef.current = { x: t.clientX, y: t.clientY }
+    })
+    rend.on('touchend', (e) => {
+      const t = e.changedTouches?.[0], s = touchRef.current
+      touchRef.current = null
+      if (!t || !s) return
+      lastTouchRef.current = Date.now()
+      const dx = t.clientX - s.x, dy = t.clientY - s.y
+      if (flowRef.current === 'paginated' && Math.abs(dx) > SWIPE_PX && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        go(dx < 0 ? 'next' : 'prev')
+      } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+        handleTap(e, t.clientX, true)
       }
     })
-  }, [onProgress, bookId])
 
-  /* ── Keyboard shortcuts ───────────────────────────── */
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape') { setTocOpen(false); setBmOpen(false); return }
-      if (modeRef.current === 'page') {
-        if (e.key === 'ArrowRight' || e.key === 'PageDown') flipPage('next')
-        if (e.key === 'ArrowLeft'  || e.key === 'PageUp')   flipPage('prev')
-      } else {
-        if (e.key === 'PageDown') rendRef.current?.next()
-        if (e.key === 'PageUp')   rendRef.current?.prev()
-      }
+    await rend.display(at ?? undefined)
+
+    // Scroll mode on touch screens: tuck the bars away while scrolling down the page
+    const scroller = rend.manager?.container
+    if (flow === 'scrolled' && scroller) {
+      scrollTopRef.current = scroller.scrollTop
+      scroller.addEventListener('scroll', () => {
+        const dy = scroller.scrollTop - scrollTopRef.current
+        scrollTopRef.current = scroller.scrollTop
+        if (canHover() || panelOpenRef.current || Math.abs(dy) < 8) return
+        setChromeHidden(dy > 0)
+      }, { passive: true })
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, []) // eslint-disable-line
-
-  /* ── Page-flip animation ──────────────────────────── */
-  const flipPage = useCallback((dir) => {
-    if (!rendRef.current || animRef.current) return
-    animRef.current = true
-    const exit  = dir === 'next' ? 'flip-exit-left'  : 'flip-exit-right'
-    const enter = dir === 'next' ? 'flip-enter-right' : 'flip-enter-left'
-    setFlipCls(exit)
-    setTimeout(() => {
-      dir === 'next' ? rendRef.current?.next() : rendRef.current?.prev()
-      setFlipCls(enter)
-      setTimeout(() => { setFlipCls(''); animRef.current = false }, 300)
-    }, 220)
-  }, [])
-
-  /* ── Chapter jump (smooth fade) ───────────────────── */
-  const jumpTo = useCallback(async (href) => {
-    if (!href || !rendRef.current || !bookRef.current) return
-    setTocOpen(false)
-    setJumping(true)
-    await new Promise(r => setTimeout(r, 200))
-    const rend = rendRef.current
-    const book = bookRef.current
-    const path = href.split('#')[0]
-    const item = book.spine.get(path)
-    try {
-      await rend.display(item ? item.index : href)
-    } catch {
-      try { await rend.display(href) } catch { /* bad TOC link: stay on the current page */ }
-    }
-    setJumping(false)
-  }, [])
-
-  /* ── Bookmark jump ────────────────────────────────── */
-  const jumpToBookmark = useCallback(async (cfi) => {
-    if (!cfi || !rendRef.current) return
-    setBmOpen(false)
-    setJumping(true)
-    await new Promise(r => setTimeout(r, 200))
-    try { await rendRef.current.display(cfi) } catch { /* stale bookmark: stay on the current page */ }
-    setJumping(false)
-  }, [])
-
-  /* ── Mode toggle (with fade) ──────────────────────── */
-  const toggleMode = useCallback(async () => {
-    const book = bookRef.current
-    const el   = containerRef.current
-    if (!book || !el) return
-
-    const saved   = cfiRef.current
-    const newMode = modeRef.current === 'scroll' ? 'page' : 'scroll'
-
-    setJumping(true)
-    await new Promise(r => setTimeout(r, 200))
-
-    rendRef.current?.destroy()
-    rendRef.current = null
-
-    const rend = book.renderTo(el,
-      newMode === 'scroll'
-        ? { width: el.offsetWidth, height: el.offsetHeight, flow: 'scrolled', manager: 'continuous' }
-        : { width: el.offsetWidth, height: el.offsetHeight, spread: 'none',   flow: 'paginated'     }
-    )
-    rendRef.current = rend
-    rend.themes.default(buildTheme(themeStyle, fontSize))
-    await rend.display(saved ?? undefined)
-    wireEvents(rend)
-    setMode(newMode)
-    setJumping(false)
-  }, [themeStyle, fontSize, wireEvents])
+  }, [bookId, updateProgress, onKey, onMouseMove, handleTap, go])
 
   /* ── Load book ────────────────────────────────────── */
   useEffect(() => {
     if (!url) return
-    let dead  = false
-    let timer = null
+    let dead = false
 
     ;(async () => {
       setLoading(true)
       setError(null)
-      setProgress(0)
-      setChapter('')
-      setBookTitle('')
-      setToc([])
-      setTocOpen(false)
-      setBmOpen(false)
-      setJumping(false)
-      cfiRef.current  = null
-      modeRef.current = 'scroll'
-      setMode('scroll')
-
-      const savedCfi = bookId ? (localStorage.getItem(storageKey(bookId)) ?? undefined) : undefined
-
+      locsReadyRef.current = false
       try {
         const ePub = (await import('epubjs')).default
-        if (dead) return
-
-        bookRef.current?.destroy()
-        bookRef.current = rendRef.current = null
-
         const res = await fetch(url)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        if (!res.ok) throw new Error(`Couldn't download this book (HTTP ${res.status})`)
         const buf = await res.arrayBuffer()
         if (dead) return
 
+        bookRef.current?.destroy()
         const book = ePub(buf)
         bookRef.current = book
 
-        const el = containerRef.current
-        if (!el) return
+        const savedCfi = bookId ? (localStorage.getItem(storageKey(bookId)) ?? undefined) : undefined
+        await renderBook(prefsRef.current.flow, savedCfi)
+        if (dead) return
+        setLoading(false)
 
-        const rend = book.renderTo(el, {
-          width: el.offsetWidth, height: el.offsetHeight,
-          flow: 'scrolled', manager: 'continuous',
-        })
-        rendRef.current = rend
-        rend.themes.default(buildTheme(themeStyle, fontSize))
+        book.loaded.metadata.then((meta) => { if (!dead && meta?.title) setBookTitle(meta.title) }).catch(() => {})
+        book.loaded.navigation.then(() => { if (!dead) setToc(book.navigation?.toc || []) }).catch(() => {})
 
-        timer = setTimeout(() => { if (!dead) setLoading(false) }, 8000)
-        rend.once('rendered', () => { clearTimeout(timer); if (!dead) setLoading(false) })
-
-        await rend.display(savedCfi)
-        wireEvents(rend)
-        book.locations.generate(1024)
-
-        book.loaded.metadata.then(() => {
-          if (dead) return
-          const meta = book.packaging?.metadata || book.package?.metadata
-          if (meta?.title) setBookTitle(meta.title)
-        }).catch(() => {})
-
-        book.loaded.navigation.then(() => {
-          if (!dead) setToc(book.navigation?.toc || [])
-        }).catch(() => {})
-
+        // The location map turns a position into a percentage. Building it means reading
+        // the whole book, so do it once and keep it for next time.
+        await book.ready
+        const cached = bookId && localStorage.getItem(locationsKey(bookId))
+        if (cached) {
+          book.locations.load(cached)
+        } else {
+          await book.locations.generate(1600)
+          try { localStorage.setItem(locationsKey(bookId), book.locations.save()) } catch { /* too big or blocked: rebuilt next time */ }
+        }
+        if (dead) return
+        locsReadyRef.current = true
+        updateProgress(cfiRef.current)
       } catch (e) {
-        if (!dead) { clearTimeout(timer); setError(e.message); setLoading(false) }
+        if (!dead) { setError(e.message || 'This book could not be opened'); setLoading(false) }
       }
     })()
 
     return () => {
       dead = true
-      clearTimeout(timer)
+      rendRef.current?.destroy()
       bookRef.current?.destroy()
       bookRef.current = rendRef.current = null
     }
   }, [url]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Re-apply theme on change ─────────────────────── */
-  useEffect(() => {
-    if (!rendRef.current) return
-    rendRef.current.themes.default(buildTheme(themeStyle, fontSize))
-  }, [themeStyle, fontSize])
+  /* ── Apply preference changes ─────────────────────── */
+  const jumpTo = useCallback(async (target) => {
+    if (!target || !rendRef.current) return
+    closePanels()
+    setJumping(true)
+    await new Promise((r) => setTimeout(r, 180))
+    try {
+      await rendRef.current.display(target)          // keeps #section anchors and bookmark positions
+    } catch {
+      // Some TOCs use paths the spine knows by another name — fall back to the chapter start
+      const item = bookRef.current?.spine.get(String(target).split('#')[0])
+      try { if (item) await rendRef.current.display(item.index) } catch { /* bad link: stay where we are */ }
+    }
+    setJumping(false)
+  }, [closePanels])
 
-  /* ── Resize observer ──────────────────────────────── */
+  const firstPrefs = useRef(true)
+  useEffect(() => {
+    if (firstPrefs.current) { firstPrefs.current = false; return }
+    const rend = rendRef.current
+    if (!rend) return
+    const at = cfiRef.current
+    if (prefs.flow !== flowRef.current) {
+      // Switching scroll <-> pages needs a fresh rendition, at the same place
+      setJumping(true)
+      const t = setTimeout(async () => {
+        await renderBook(prefs.flow, at)
+        setJumping(false)
+      }, 180)
+      return () => clearTimeout(t)
+    }
+    applyBookCss(rend)
+    // Text reflows after a style change — re-anchor so you stay on the same sentence
+    const t = setTimeout(() => { if (at) rendRef.current?.display(at).catch(() => {}) }, 120)
+    return () => clearTimeout(t)
+  }, [prefs, renderBook, applyBookCss])
+
+  /* ── Keep the rendition sized to its box ──────────── */
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -323,159 +414,147 @@ export default function EpubReader({ url, bookId, fontSize, themeStyle, themeMod
     return () => ro.disconnect()
   }, [])
 
-  if (error) return (
-    <div className="epub-reader" data-theme={themeMode}>
-      <div className="epub-error mono">{error}</div>
-    </div>
-  )
-
-  const isPaged      = mode === 'page'
-  const goBack       = isPaged ? () => flipPage('prev') : () => rendRef.current?.prev()
-  const goFwd        = isPaged ? () => flipPage('next') : () => rendRef.current?.next()
-  const navLabel     = chapter || bookTitle || ''
-  const isBookmarked = bookmarks.some(b => b.cfi === cfiRef.current)
+  /* ── Render ───────────────────────────────────────── */
+  const theme        = THEMES[prefs.theme]
+  const isPaged      = prefs.flow === 'paginated'
+  const isBookmarked = bookmarks.some((b) => b.cfi === cfiRef.current)
+  const pct          = Math.round(progress * 100)
 
   const toggleBookmark = () => {
-    if (isBookmarked) {
-      const bm = bookmarks.find(b => b.cfi === cfiRef.current)
-      if (bm) removeBookmark(bm.id)
-    } else {
-      addBookmark()
-    }
+    const cfi = cfiRef.current
+    if (!cfi) return
+    setBookmarks((prev) => {
+      const next = prev.some((b) => b.cfi === cfi)
+        ? prev.filter((b) => b.cfi !== cfi)
+        : [{ id: Date.now(), cfi, chapter: chapter || bookTitle || '—', pct: progress, createdAt: new Date().toISOString() }, ...prev]
+      persistBookmarks(next)
+      return next
+    })
   }
 
+  const removeBookmark = (id) => setBookmarks((prev) => {
+    const next = prev.filter((b) => b.id !== id)
+    persistBookmarks(next)
+    return next
+  })
+
+  const chromeClass = chromeHidden && !panelOpen ? ' chrome-hidden' : ''
+  // Page mode: the box is the text column itself (font-size × width-in-ems + the page gap)
+  const columnPx = Math.round(prefs.fontSize * WIDTHS[prefs.width])
+
   return (
-    <div className="epub-reader" data-theme={themeMode}>
-
-      {/* ── Backdrop (closes both panels) ───────────── */}
-      {(tocOpen || bmOpen) && (
-        <div className="toc-backdrop" onClick={() => { setTocOpen(false); setBmOpen(false) }} />
-      )}
-
-      {/* ── TOC drawer (left) ───────────────────────── */}
-      <aside className={`toc-panel${tocOpen ? ' open' : ''}`}>
-        <div className="toc-head mono">Contents</div>
-        <div className="toc-scroll">
-          {toc.length
-            ? toc.map((item, i) => (
-                <TocRow key={i} item={item} current={chapter} onPick={jumpTo} depth={0} />
-              ))
-            : <div className="toc-empty mono">No chapters found</div>
-          }
-        </div>
-      </aside>
-
-      {/* ── Bookmark drawer (right) ─────────────────── */}
-      <aside className={`bm-panel${bmOpen ? ' open' : ''}`}>
-        <div className="bm-head">
-          <span className="bm-head-title mono">Bookmarks</span>
-          <button
-            className={`bm-add-btn mono${isBookmarked ? ' bm-add-btn--on' : ''}`}
-            onClick={toggleBookmark}
-            title={isBookmarked ? 'Remove bookmark' : 'Bookmark this page'}
-          >
-            {isBookmarked ? '✕ remove' : '+ mark'}
-          </button>
-        </div>
-        <div className="bm-scroll">
-          {bookmarks.length
-            ? bookmarks.map(bm => (
-                <div key={bm.id} className="bm-item">
-                  <button className="bm-item-main" onClick={() => jumpToBookmark(bm.cfi)}>
-                    <span className="bm-chapter">{bm.chapter}</span>
-                    <span className="bm-pct mono">{Math.round(bm.pct * 100)}%</span>
-                  </button>
-                  <button
-                    className="bm-remove"
-                    onClick={() => removeBookmark(bm.id)}
-                    aria-label="Remove bookmark"
-                  >×</button>
-                </div>
-              ))
-            : <div className="bm-empty mono">No bookmarks yet</div>
-          }
-        </div>
-      </aside>
-
-      {/* ── Loading ─────────────────────────────────── */}
-      {loading && (
-        <div className="epub-loading">
-          <div className="epub-spinner" />
-          <span className="mono">Opening…</span>
-        </div>
-      )}
-
-      {/* ── Navigation bar ──────────────────────────── */}
-      <nav className="epub-nav">
-        <button
-          className={`nav-arrow${atStart ? ' dim' : ''}`}
-          onClick={goBack}
-          aria-label="Previous"
-        >‹</button>
+    <div
+      className={`epub-reader${chromeClass}`}
+      data-theme={prefs.theme}
+      data-flow={prefs.flow}
+      style={{
+        '--r-bg': theme.bg, '--r-text': theme.text, '--r-accent': theme.accent,
+        '--r-col': `${columnPx + PAGE_GAP.wide}px`,
+      }}
+    >
+      {/* ── Top bar ─────────────────────────────────── */}
+      <header
+        className="rd-bar rd-top"
+        onMouseEnter={() => { overBarRef.current = true }}
+        onMouseLeave={() => { overBarRef.current = false }}
+      >
+        <Link to="/library" className="rd-icon" aria-label="Back to the library" title="Back to the library">←</Link>
 
         <button
-          className="nav-chapter"
-          onClick={() => { setTocOpen(o => !o); setBmOpen(false) }}
-          aria-label="Table of contents"
-          title="Open chapter list"
+          className="rd-title"
+          onClick={() => { setDrawer((d) => (d === 'contents' ? null : 'contents')); setSettings(false) }}
+          aria-label="Contents"
+          title="Contents"
         >
-          {navLabel
-            ? <span className="nav-label mono">{navLabel}</span>
-            : <span className="nav-dots">· · ·</span>
-          }
-          <span className="nav-caret">▾</span>
-        </button>
-
-        <button className="nav-mode mono" onClick={toggleMode}>
-          {isPaged ? '≡ scroll' : '⊞ pages'}
+          <span className="rd-title-book">{bookTitle || ' '}</span>
+          <span className="rd-title-chapter">{chapter || 'Contents'} <span className="rd-caret">▾</span></span>
         </button>
 
         <button
-          className={`nav-bookmark mono${isBookmarked ? ' active' : ''}`}
-          onClick={() => { setBmOpen(o => !o); setTocOpen(false) }}
-          aria-label="Bookmarks"
-          title={bmOpen ? 'Close bookmarks' : 'Open bookmarks'}
+          className={`rd-icon${isBookmarked ? ' on' : ''}`}
+          onClick={toggleBookmark}
+          aria-pressed={isBookmarked}
+          aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this page'}
+          title={isBookmarked ? 'Remove bookmark' : 'Bookmark this page'}
         >
           {isBookmarked ? '◆' : '◇'}
         </button>
-
         <button
-          className={`nav-arrow${atEnd ? ' dim' : ''}`}
-          onClick={goFwd}
-          aria-label="Next"
-        >›</button>
-      </nav>
+          className={`rd-icon rd-aa${settings ? ' on' : ''}`}
+          onClick={() => { setSettings((s) => !s); setDrawer(null) }}
+          aria-expanded={settings}
+          aria-label="Reading settings"
+          title="Reading settings"
+        >
+          Aa
+        </button>
+      </header>
 
-      {/* ── Reading area ────────────────────────────── */}
-      <div className="epub-stage">
+      {/* ── Panels ──────────────────────────────────── */}
+      {panelOpen && <div className="rd-backdrop" onClick={closePanels} />}
+
+      <aside className={`rd-drawer${drawer ? ' open' : ''}`} aria-hidden={!drawer}>
+        <div className="rd-tabs" role="tablist">
+          <button role="tab" aria-selected={drawer !== 'bookmarks'}
+                  className={`rd-tab${drawer !== 'bookmarks' ? ' on' : ''}`}
+                  onClick={() => setDrawer('contents')}>Contents</button>
+          <button role="tab" aria-selected={drawer === 'bookmarks'}
+                  className={`rd-tab${drawer === 'bookmarks' ? ' on' : ''}`}
+                  onClick={() => setDrawer('bookmarks')}>
+            Bookmarks{bookmarks.length ? ` · ${bookmarks.length}` : ''}
+          </button>
+          <button className="rd-drawer-close" onClick={closePanels} aria-label="Close">×</button>
+        </div>
+        <div className="rd-drawer-scroll">
+          {drawer !== 'bookmarks' ? (
+            toc.length
+              ? toc.map((item, i) => <TocRow key={i} item={item} current={chapter} onPick={jumpTo} depth={0} />)
+              : <div className="rd-empty">No chapters found</div>
+          ) : (
+            bookmarks.length
+              ? bookmarks.map((bm) => (
+                  <div key={bm.id} className="bm-item">
+                    <button className="bm-item-main" onClick={() => jumpTo(bm.cfi)}>
+                      <span className="bm-chapter">{bm.chapter}</span>
+                      <span className="bm-pct">{Math.round(bm.pct * 100)}%</span>
+                    </button>
+                    <button className="bm-remove" onClick={() => removeBookmark(bm.id)} aria-label="Remove bookmark">×</button>
+                  </div>
+                ))
+              : <div className="rd-empty">No bookmarks yet — tap ◇ at the top to mark a page</div>
+          )}
+        </div>
+      </aside>
+
+      {settings && <ReaderSettings prefs={prefs} onChange={setPrefs} onClose={() => setSettings(false)} />}
+
+      {/* ── Book ────────────────────────────────────── */}
+      <main className="rd-stage">
         {isPaged && (
           <>
-            <button
-              className={`page-tap left${atStart ? ' hidden' : ''}`}
-              onClick={goBack}
-              aria-label="Previous page"
-            />
-            <button
-              className={`page-tap right${atEnd ? ' hidden' : ''}`}
-              onClick={goFwd}
-              aria-label="Next page"
-            />
+            <button className={`rd-turn left${atStart ? ' off' : ''}`} onClick={() => go('prev')} aria-label="Previous page">‹</button>
+            <button className={`rd-turn right${atEnd ? ' off' : ''}`} onClick={() => go('next')} aria-label="Next page">›</button>
           </>
         )}
-        <div
-          className={`epub-body${flipCls ? ` ${flipCls}` : ''}${jumping ? ' epub-jumping' : ''}`}
-          ref={containerRef}
-        />
-      </div>
+        <div className={`rd-book${flipCls ? ` ${flipCls}` : ''}${jumping ? ' jumping' : ''}`} ref={containerRef} />
 
-      {/* ── Progress bar ────────────────────────────── */}
-      <footer className="epub-foot">
-        <div className="foot-track">
-          <div className="foot-fill" style={{ transform: `scaleX(${progress})` }} />
+        {loading && (
+          <div className="rd-loading">
+            <div className="rd-spinner" />
+            <span>Opening…</span>
+          </div>
+        )}
+        {error && <div className="rd-error">{error}</div>}
+      </main>
+
+      {/* ── Progress ────────────────────────────────── */}
+      <footer className="rd-bar rd-foot">
+        <span className="rd-foot-left">{pagesLeftLabel(pageInfo)}</span>
+        <div className="rd-track" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Progress through the book">
+          <div className="rd-fill" style={{ transform: `scaleX(${progress})` }} />
         </div>
-        <span className="foot-pct mono">{Math.round(progress * 100)}%</span>
+        <span className="rd-foot-pct">{hasProgress ? `${pct}%` : '…'}</span>
       </footer>
-
     </div>
   )
 }
