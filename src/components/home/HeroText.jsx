@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import ChapterCard from '../ui/ChapterCard'
 import artnoImg from '../../assets/ARTNO.jpg'
 import cait2Img from '../../assets/cait2.jpg'
-import jinxImg  from '../../assets/jinx.jpg'
+import pomImg   from '../../assets/pom-woman.jpg'
 import './HeroText.css'
 
 const container = {
@@ -58,17 +59,17 @@ export default function HeroText() {
           <div className="deck-corona" />
         </button>
 
-        {/* Middle — Jinx */}
-        <button className="deck-card deck-jinx" aria-disabled="true" tabIndex={-1}>
-          <img src={jinxImg} alt="" className="deck-img" draggable={false} />
+        {/* Middle — Chapter II: The Orchard, the hand-tracking mini game */}
+        <Link to="/orchard" className="deck-card deck-orchard">
+          <img src={pomImg} alt="The Orchard" className="deck-img" draggable={false} />
           <div className="deck-frame" />
           <div className="deck-label">
             <span className="deck-ornament">✦ ✦ ✦</span>
             <span className="deck-title">Chapter II</span>
-            <span className="deck-sub">coming soon</span>
+            <span className="deck-sub">the orchard · play →</span>
           </div>
           <div className="deck-corona" />
-        </button>
+        </Link>
 
         {/* Front — Portfolio */}
         <a

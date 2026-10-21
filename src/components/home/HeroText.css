@@ -147,12 +147,12 @@
   cursor: not-allowed;
   pointer-events: none;
 }
-.deck-jinx {
+.deck-orchard {
   z-index: 2;
-  /* almost hidden: 1px left, 1px up */
+  /* almost hidden: 1px left, 1px up — the deck fans out on hover to reach it */
   transform: translate(-1px, -1px) rotate(-1deg);
   filter: brightness(0.82) saturate(0.86);
-  cursor: not-allowed;
+  cursor: pointer;
   pointer-events: none;
 }
 .deck-portfolio {
@@ -168,7 +168,7 @@
   filter: brightness(0.88) saturate(0.93);
   pointer-events: auto;
 }
-.hero-deck:hover .deck-jinx {
+.hero-deck:hover .deck-orchard {
   transform: translateX(85px) rotate(0deg);      /* x: 105px, right edge: 235px */
   filter: brightness(0.93) saturate(0.97);
   pointer-events: auto;
@@ -184,7 +184,7 @@
   filter: brightness(1.0) saturate(1.0);
   z-index: 10;
 }
-.hero-deck:hover .deck-jinx:hover {
+.hero-deck:hover .deck-orchard:hover {
   transform: translateY(-12px) translateX(85px) rotate(0deg);
   filter: brightness(1.0) saturate(1.0);
   z-index: 10;
@@ -324,7 +324,7 @@
 }
 @media (max-width: 767px) and (hover: none) {
   .hero-deck .deck-game      { transform: translateX(-15px) rotate(-10deg); filter: brightness(0.8) saturate(0.9); }
-  .hero-deck .deck-jinx      { transform: translateX(85px) rotate(0deg);   filter: brightness(0.88) saturate(0.95); }
+  .hero-deck .deck-orchard    { transform: translateX(85px) rotate(0deg);   filter: brightness(0.88) saturate(0.95); pointer-events: auto; }
   .hero-deck .deck-portfolio { transform: translateX(175px) rotate(8deg); }
 }
 @media (max-width: 359px) {

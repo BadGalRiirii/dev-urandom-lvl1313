@@ -117,11 +117,15 @@ body.page-journal .light-leak {
   display: none;
 }
 
-/* Reader: nothing drawn on top of book text */
+/* Reader: nothing drawn on top of book text. Game: it repaints every frame */
 body.page-read::before,
 body.page-read::after,
 body.page-read .vignette,
-body.page-read .light-leak {
+body.page-read .light-leak,
+body.page-game::before,
+body.page-game::after,
+body.page-game .vignette,
+body.page-game .light-leak {
   display: none;
 }
 
