@@ -26,7 +26,19 @@
   pointer-events: none;
   transition: opacity 0.8s ease;
 }
-.orchard.with-camera .orch-video { opacity: 0.2; }
+/* The live video only feeds the tracker (kept barely visible so the browser keeps
+   delivering frames); what you see is the ghost canvas — the frames the tracker
+   actually read, so the fingertip light never trails your reflection */
+.orchard.with-camera .orch-video { opacity: 0.01; }
+.orch-ghost {
+  position: absolute;
+  transform: scaleX(-1);
+  opacity: 0;
+  filter: grayscale(1) sepia(0.55) contrast(1.15) brightness(0.8);
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.orchard.with-camera .orch-ghost { opacity: 0.2; }
 
 .orch-canvas {
   position: absolute;
