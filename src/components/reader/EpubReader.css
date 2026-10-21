@@ -16,6 +16,9 @@
   inset: 0;
   display: grid;
   grid-template-rows: calc(var(--bar-h) + env(safe-area-inset-top)) 1fr calc(var(--foot-h) + env(safe-area-inset-bottom));
+  /* Never wider than the screen: epub.js gives its box a fixed width, and an auto
+     column would grow to fit it, then epub.js would fit that, and so on */
+  grid-template-columns: minmax(0, 1fr);
   background: var(--r-bg);
   color: var(--r-text);
   transition: background 0.35s ease, color 0.35s ease;
@@ -152,18 +155,37 @@
 .rd-stage {
   position: relative;
   min-height: 0;
+  min-width: 0;
   display: flex;
   justify-content: center;
+  overflow: hidden;
 }
 
 .rd-book {
+  position: relative;
+  flex: none;
   width: 100%;
+  min-width: 0;
   height: 100%;
+  overflow: hidden;
   transition: opacity 0.18s ease;
 }
 .epub-reader[data-flow="paginated"] .rd-book {
-  /* A page is one comfortable column, not the full screen width */
-  width: min(100%, var(--r-col));
+  /* A page is one comfortable column (or two, side by side), not the full screen */
+  width: min(100%, var(--r-book));
+}
+/* Two pages: a faint fold down the middle, like an open book */
+.rd-book.spread::after {
+  content: '';
+  position: absolute;
+  top: 4%;
+  bottom: 4%;
+  left: 50%;
+  width: 1px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(transparent, var(--r-faint) 18%, var(--r-faint) 82%, transparent);
+  box-shadow: 0 0 22px 7px color-mix(in srgb, var(--r-text) 3%, transparent);
 }
 .rd-book.jumping { opacity: 0; pointer-events: none; }
 
@@ -179,7 +201,7 @@
   top: 0;
   bottom: 0;
   z-index: 5;
-  width: max(48px, calc((100% - var(--r-col)) / 2));
+  width: max(48px, calc((100% - var(--r-book)) / 2));
   display: flex;
   align-items: center;
   background: transparent;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import ReaderSettings from './ReaderSettings'
 import { THEMES, WIDTHS, FONT_CSS_URL, loadPrefs, savePrefs, buildBookCss } from './readerPrefs'
@@ -10,11 +10,52 @@ const locationsKey = (id) => `riri_reader_${id}_locs`
 
 const BOOK_CSS_KEY   = 'riri-reader'
 const CHROME_IDLE_MS = 2800   // desktop: bars fade after this long without the mouse moving
-const SWIPE_PX       = 45
-const PAGE_GAP       = { wide: 56, narrow: 32 }
+const PAGE_GAP       = { wide: 56, narrow: 44 }
+const TURN_MS        = 260    // a page sliding across
+const SPREAD_MARGIN  = 56     // each side of a two-page spread, for the turn arrows
+const SPREAD_MIN_EM  = 28     // a page of a spread is never narrower than this
+const HEADING_MAX    = 1.6    // × the text size
 
 const canHover      = () => window.matchMedia('(hover: hover)').matches
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const easeOut       = (t) => 1 - (1 - t) ** 3
+const pageGap       = () => (window.innerWidth < 600 ? PAGE_GAP.narrow : PAGE_GAP.wide)
+
+// Where a pointer is across the whole page. Events from inside the book's frame
+// count from the frame's own corner, and the frame moves as pages slide.
+const pageX = (e, clientX) => (e.view?.frameElement?.getBoundingClientRect().left ?? 0) + clientX
+
+// epub.js moves between pages by scrolling a wide strip of columns sideways. Move it
+// ourselves (quietly, so epub.js doesn't take each step as a new place in the book).
+const scrollQuietly = (manager, x) => {
+  const box = manager.container
+  if (Math.abs(box.scrollLeft - x) < 0.5) return
+  manager.ignore = true
+  box.scrollLeft = x
+}
+
+// The page beside the one on screen, when it's in the same chapter (and so already
+// laid out, just off to the side). At a chapter's edge there's nothing there yet.
+const neighbour = (rend, dir) => {
+  const m = rend?.manager, box = m?.container, delta = m?.layout?.delta
+  if (!box || !delta) return null
+  const base = Math.round(box.scrollLeft / delta) * delta
+  const to   = base + (dir === 'next' ? delta : -delta)
+  if (to < 0 || to + box.offsetWidth > box.scrollWidth + 1) return null
+  return { m, base, to }
+}
+
+// Some books set chapter headings so large that a phone page holds three words.
+// Keep each to at most HEADING_MAX × the text (in rem, so it follows the size setting).
+const tameHeadings = (doc) => {
+  const win  = doc.defaultView
+  const body = parseFloat(win.getComputedStyle(doc.body).fontSize)
+  for (const h of doc.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
+    if (parseFloat(win.getComputedStyle(h).fontSize) > body * HEADING_MAX) {
+      h.style.setProperty('font-size', `${HEADING_MAX}rem`, 'important')
+    }
+  }
+}
 
 const findLabel = (toc, href) => {
   if (!toc?.length || !href) return ''
@@ -76,7 +117,7 @@ const chapterPages = (rend) => {
 }
 
 // Settings that change where the words fall (theme only recolours)
-const REFLOW_PREFS = ['font', 'fontSize', 'spacing', 'width', 'justify']
+const REFLOW_PREFS = ['font', 'fontSize', 'spacing', 'width', 'justify', 'spread']
 
 // Scroll mode: note how far through the chapter on screen you are, and return a
 // function that puts you back there once the text has reflowed
@@ -120,6 +161,10 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
   const idleRef      = useRef(null)
   const overBarRef   = useRef(false)
   const touchRef     = useRef(null)
+  const slideRef     = useRef(null)    // the page slide under way
+  const wheelRef     = useRef({ total: 0, last: 0, done: false })
+  const stageRef     = useRef(null)
+  const spreadRef    = useRef(false)
   const lastTouchRef = useRef(0)
   const scrollTopRef = useRef(0)
   const locsReadyRef = useRef(false)   // percentages are only right once the full location map exists
@@ -143,6 +188,7 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
   const [chromeHidden, setChromeHidden] = useState(false)
   const [jumping,   setJumping]   = useState(false)
   const [bookmarks, setBookmarks] = useState([])
+  const [stageW,    setStageW]    = useState(() => window.innerWidth)
 
   prefsRef.current = prefs
   const panelOpen = drawer !== null || settings
@@ -202,11 +248,44 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
   }, [])
 
   /* ── Page turning ─────────────────────────────────── */
-  // The page changes at once; the little slide-in plays afterwards and never holds up
-  // the next tap. Only a turn that's still loading the next chapter blocks another.
+  // Inside a chapter the next page is already laid out beside this one, so it slides
+  // across for real (and follows a finger). Into a new chapter, epub.js has to load it
+  // first; it then slides in from the side. Nothing ever waits for an animation: a
+  // turn during a slide lands the slide at once and starts from there.
+  const stopSlide = useCallback((land) => {
+    const s = slideRef.current
+    if (!s) return
+    cancelAnimationFrame(s.raf)
+    slideRef.current = null
+    if (land) { scrollQuietly(s.m, s.to); rendRef.current?.reportLocation() }
+  }, [])
+
+  const slide = useCallback((m, to, ms = TURN_MS) => {
+    stopSlide(true)
+    const from = m.container.scrollLeft, start = performance.now()
+    const s = { m, to, raf: 0 }
+    const step = (now) => {
+      if (slideRef.current !== s) return
+      const t = Math.min(1, (now - start) / ms)
+      scrollQuietly(m, from + (to - from) * easeOut(t))
+      if (t < 1) { s.raf = requestAnimationFrame(step); return }
+      slideRef.current = null
+      rendRef.current?.reportLocation()
+    }
+    slideRef.current = s
+    s.raf = requestAnimationFrame(step)
+  }, [stopSlide])
+
   const go = useCallback(async (dir) => {
     const rend = rendRef.current
-    if (!rend || turningRef.current) return
+    if (!rend) return
+    stopSlide(true)
+    const animate = flowRef.current === 'paginated' && !reducedMotion()
+    const near = animate && !turningRef.current && neighbour(rend, dir)
+    if (near) { slide(near.m, near.to); return }
+
+    // Only a turn that's still loading the next chapter blocks another
+    if (turningRef.current) return
     turningRef.current = true
     try {
       // epub.js can leave a turn hanging (busy loading a chapter); never let that
@@ -214,13 +293,25 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
       await Promise.race([dir === 'next' ? rend.next() : rend.prev(), new Promise((r) => setTimeout(r, 900))])
     } catch { /* couldn't turn (e.g. end of book): stay put */ }
     turningRef.current = false
-    if (flowRef.current === 'paginated' && !reducedMotion()) {
-      const shift = dir === 'next' ? '14px' : '-14px'
+    if (animate) {
+      const from = dir === 'next' ? '22%' : '-22%'
       containerRef.current?.animate(
-        [{ opacity: 0.55, transform: `translate3d(${shift},0,0)` }, { opacity: 1, transform: 'none' }],
-        { duration: 170, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' })
+        [{ opacity: 0, transform: `translate3d(${from},0,0)` }, { opacity: 1, transform: 'none' }],
+        { duration: TURN_MS + 60, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' })
     }
-  }, [])
+  }, [slide, stopSlide])
+
+  // Pages mode: a trackpad swipe or a turn of the mouse wheel turns one page
+  const onWheel = useCallback((e) => {
+    if (flowRef.current !== 'paginated' || panelOpenRef.current || e.ctrlKey) return
+    e.preventDefault()
+    const w = wheelRef.current, now = performance.now()
+    if (now - w.last > 220) { w.total = 0; w.done = false }    // a new flick or turn
+    w.last = now
+    if (w.done) return                                         // the rest of the same one
+    w.total += (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * (e.deltaMode === 1 ? 16 : 1)
+    if (Math.abs(w.total) > 40) { w.done = true; go(w.total > 0 ? 'next' : 'prev') }
+  }, [go])
 
   const closePanels = useCallback(() => { setDrawer(null); setSettings(false) }, [])
 
@@ -239,8 +330,8 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
       box.scrollBy({ top: e.shiftKey && e.key === ' ' ? -step : step, behavior: reducedMotion() ? 'auto' : 'smooth' })
       return
     }
-    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault?.(); go('next') }
-    if (['ArrowLeft', 'PageUp'].includes(e.key))         { e.preventDefault?.(); go('prev') }
+    if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) { e.preventDefault?.(); go(e.shiftKey && e.key === ' ' ? 'prev' : 'next') }
+    if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key))           { e.preventDefault?.(); go('prev') }
   }, [go, closePanels])
 
   useEffect(() => {
@@ -248,13 +339,11 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onKey])
 
-  // Where a tap/click landed, as a fraction of the reading area's width.
-  // Events come from inside the book's iframe, so offset by the frame's position.
+  // Where a tap/click landed, as a fraction of the reading area's width
   const tapPosition = useCallback((e, clientX) => {
-    const frame = e.view?.frameElement
-    const box   = containerRef.current?.getBoundingClientRect()
-    if (!frame || !box?.width) return 0.5
-    return (frame.getBoundingClientRect().left + clientX - box.left) / box.width
+    const box = containerRef.current?.getBoundingClientRect()
+    if (!e.view?.frameElement || !box?.width) return 0.5
+    return (pageX(e, clientX) - box.left) / box.width
   }, [])
 
   const handleTap = useCallback((e, clientX, isTouch) => {
@@ -281,18 +370,20 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
     const el   = containerRef.current
     if (!book || !el) return
 
+    stopSlide(false)
     rendRef.current?.destroy()
     flowRef.current = flow
-    const narrow = el.offsetWidth < 600
     const rend = book.renderTo(el, flow === 'scrolled'
       ? { width: el.offsetWidth, height: el.offsetHeight, flow: 'scrolled', manager: 'continuous' }
-      : { width: el.offsetWidth, height: el.offsetHeight, flow: 'paginated', spread: 'none',
-          gap: narrow ? PAGE_GAP.narrow : PAGE_GAP.wide })
+      : { width: el.offsetWidth, height: el.offsetHeight, flow: 'paginated',
+          spread: spreadRef.current ? 'auto' : 'none', minSpreadWidth: 0, gap: pageGap() })
     rendRef.current = rend
 
     rend.hooks.content.register((contents) => {
       contents.addStylesheet(FONT_CSS_URL)
       contents.addStylesheetCss(buildBookCss(prefsRef.current, flowRef.current), BOOK_CSS_KEY)
+      tameHeadings(contents.document)
+      contents.document.addEventListener('wheel', onWheel, { passive: false })
     })
 
     rend.on('relocated', (loc) => {
@@ -314,18 +405,68 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
       if (Date.now() - lastTouchRef.current < 600) return   // already handled as a touch
       handleTap(e, e.clientX, false)
     })
+    // Touch: a tap is a tap; a sideways drag in pages mode pulls the page along under
+    // the finger and lets go to turn (or not, if it didn't go far or fast enough)
     rend.on('touchstart', (e) => {
       const t = e.changedTouches?.[0]
-      if (t) touchRef.current = { x: t.clientX, y: t.clientY }
+      if (!t) return
+      const x = pageX(e, t.clientX)
+      touchRef.current = { x, y: t.clientY, mode: null, trail: [[x, performance.now()]] }
+    })
+    rend.on('touchmove', (e) => {
+      const s = touchRef.current, t = e.changedTouches?.[0]
+      if (!s || !t || flowRef.current !== 'paginated' || panelOpenRef.current) return
+      const x = pageX(e, t.clientX), dx = x - s.x, dy = t.clientY - s.y, now = performance.now()
+      if (!s.mode) {
+        if (Math.hypot(dx, dy) < 10) return
+        s.mode = Math.abs(dx) > Math.abs(dy) ? 'drag' : 'other'
+        if (s.mode === 'drag') {
+          stopSlide(true)
+          s.next = !turningRef.current && neighbour(rend, 'next')
+          s.prev = !turningRef.current && neighbour(rend, 'prev')
+        }
+      }
+      if (s.mode !== 'drag') return
+      s.trail.push([x, now])
+      while (s.trail.length > 2 && now - s.trail[0][1] > 100) s.trail.shift()
+      const near = dx < 0 ? s.next : s.prev
+      const el = containerRef.current
+      if (near && !reducedMotion()) {
+        // the real next page comes in under the finger
+        const { m, base } = near, delta = m.layout.delta
+        scrollQuietly(m, Math.min(base + delta, Math.max(base - delta, base - dx)))
+        if (el) el.style.transform = ''
+      } else if (el) {
+        // a chapter's edge: the page gives a little, to show the pull registered
+        const other = s.next || s.prev
+        if (other) scrollQuietly(other.m, other.base)
+        el.style.transform = `translate3d(${dx * 0.3}px,0,0)`
+      }
     })
     rend.on('touchend', (e) => {
       const t = e.changedTouches?.[0], s = touchRef.current
       touchRef.current = null
       if (!t || !s) return
       lastTouchRef.current = Date.now()
-      const dx = t.clientX - s.x, dy = t.clientY - s.y
-      if (flowRef.current === 'paginated' && Math.abs(dx) > SWIPE_PX && Math.abs(dx) > Math.abs(dy) * 1.5) {
-        go(dx < 0 ? 'next' : 'prev')
+      const x = pageX(e, t.clientX), dx = x - s.x, dy = t.clientY - s.y
+      if (s.mode === 'drag') {
+        const [x0, t0] = s.trail[0]
+        const speed = (x - x0) / Math.max(1, performance.now() - t0)   // px per ms
+        const el = containerRef.current, width = el?.offsetWidth || 1
+        const far   = Math.abs(dx) > Math.min(90, width * 0.22)
+        const flung = Math.abs(dx) > 24 && Math.abs(speed) > 0.35 && Math.sign(speed) === Math.sign(dx)
+        const dir   = dx < 0 ? 'next' : 'prev'
+        const near  = dir === 'next' ? s.next : s.prev
+        if (near && !reducedMotion()) {
+          slide(near.m, far || flung ? near.to : near.base, 200)
+        } else {
+          if (el?.style.transform) {
+            const pulled = el.style.transform
+            el.style.transform = ''
+            el.animate([{ transform: pulled }, { transform: 'none' }], { duration: 180, easing: 'ease-out' })
+          }
+          if (far || flung) go(dir)
+        }
       } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
         handleTap(e, t.clientX, true)
       }
@@ -360,7 +501,7 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
         setChromeHidden(dy > 0)
       }, { passive: true })
     }
-  }, [bookId, updateProgress, onKey, onMouseMove, handleTap, go])
+  }, [bookId, updateProgress, onKey, onMouseMove, handleTap, go, slide, stopSlide, onWheel])
 
   /* ── Load book ────────────────────────────────────── */
   useEffect(() => {
@@ -420,6 +561,7 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
   const jumpTo = useCallback(async (target) => {
     if (!target || !rendRef.current) return
     closePanels()
+    stopSlide(false)
     setJumping(true)
     await new Promise((r) => setTimeout(r, 180))
     try {
@@ -430,7 +572,7 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
       try { if (item) await rendRef.current.display(item.index) } catch { /* bad link: stay where we are */ }
     }
     setJumping(false)
-  }, [closePanels])
+  }, [closePanels, stopSlide])
 
   const prevPrefs = useRef(prefs)
   useEffect(() => {
@@ -470,18 +612,40 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
     return () => clearTimeout(t)
   }, [prefs, renderBook, applyBookCss])
 
+  /* ── Page size: one column, or two side by side when there's room ── */
+  const theme     = THEMES[prefs.theme]
+  const isPaged   = prefs.flow === 'paginated'
+  const gap       = pageGap()
+  const pagePx    = Math.round(prefs.fontSize * WIDTHS[prefs.width]) + gap   // a column of text and its margins
+  const room      = stageW - 2 * SPREAD_MARGIN
+  const canSpread = isPaged && room >= 2 * (prefs.fontSize * SPREAD_MIN_EM + gap)
+  const spread    = canSpread && prefs.spread
+  const bookPx    = spread ? 2 * Math.min(pagePx, Math.floor(room / 2)) : pagePx
+
+  // Before the box changes size, so epub.js lays the new size out the new way
+  useLayoutEffect(() => {
+    if (spreadRef.current === spread) return
+    spreadRef.current = spread
+    const rend = rendRef.current
+    if (!rend || flowRef.current !== 'paginated') return
+    stopSlide(false)
+    rend.spread(spread ? 'auto' : 'none', 0)
+  }, [spread, stopSlide])
+
   /* ── Keep the rendition sized to its box ──────────── */
   useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const ro = new ResizeObserver(() => rendRef.current?.resize(el.offsetWidth, el.offsetHeight))
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
+    const el = containerRef.current, stage = stageRef.current
+    if (!el || !stage) return
+    const book = new ResizeObserver(() => { stopSlide(false); rendRef.current?.resize(el.offsetWidth, el.offsetHeight) })
+    const area = new ResizeObserver(() => setStageW(stage.clientWidth))
+    book.observe(el)
+    area.observe(stage)
+    // the margins beside the pages turn them too
+    stage.addEventListener('wheel', onWheel, { passive: false })
+    return () => { book.disconnect(); area.disconnect(); stage.removeEventListener('wheel', onWheel) }
+  }, [stopSlide, onWheel])
 
   /* ── Render ───────────────────────────────────────── */
-  const theme        = THEMES[prefs.theme]
-  const isPaged      = prefs.flow === 'paginated'
   const isBookmarked = bookmarks.some((b) => b.cfi === cfiRef.current)
   const pct          = Math.round(progress * 100)
 
@@ -504,8 +668,6 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
   })
 
   const chromeClass = chromeHidden && !panelOpen ? ' chrome-hidden' : ''
-  // Page mode: the box is the text column itself (font-size × width-in-ems + the page gap)
-  const columnPx = Math.round(prefs.fontSize * WIDTHS[prefs.width])
 
   return (
     <div
@@ -514,7 +676,7 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
       data-flow={prefs.flow}
       style={{
         '--r-bg': theme.bg, '--r-text': theme.text, '--r-accent': theme.accent,
-        '--r-col': `${columnPx + PAGE_GAP.wide}px`,
+        '--r-book': `${bookPx}px`,
       }}
     >
       {/* ── Top bar ─────────────────────────────────── */}
@@ -591,17 +753,17 @@ export default function EpubReader({ url, bookId, title: initialTitle = '' }) {
         </div>
       </aside>
 
-      {settings && <ReaderSettings prefs={prefs} onChange={setPrefs} onClose={() => setSettings(false)} />}
+      {settings && <ReaderSettings prefs={prefs} canSpread={canSpread} onChange={setPrefs} onClose={() => setSettings(false)} />}
 
       {/* ── Book ────────────────────────────────────── */}
-      <main className="rd-stage">
+      <main className="rd-stage" ref={stageRef}>
         {isPaged && (
           <>
             <button className={`rd-turn left${atStart ? ' off' : ''}`} onClick={() => go('prev')} aria-label="Previous page">‹</button>
             <button className={`rd-turn right${atEnd ? ' off' : ''}`} onClick={() => go('next')} aria-label="Next page">›</button>
           </>
         )}
-        <div className={`rd-book${jumping ? ' jumping' : ''}`} ref={containerRef} />
+        <div className={`rd-book${spread ? ' spread' : ''}${jumping ? ' jumping' : ''}`} ref={containerRef} />
 
         {loading && (
           <div className="rd-loading">
