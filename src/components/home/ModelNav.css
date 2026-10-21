@@ -387,33 +387,49 @@
   }
 }
 
+/* Phones: the flower gets its own stage in the page flow (between the title and
+   the recent additions) and the plaques sit around it — compass style, as on
+   desktop — instead of being spread over the whole page. */
 @media (max-width: 767px) {
-  .mnav-pill     { min-width: 108px; }
-  .mnav-label    { font-size: 0.58rem; letter-spacing: 0.18em; padding: 7px 14px 0; }
-  .mnav-pill-top { padding: 9px 12px 0; }
-  .mnav-pill-bot { padding: 5px 12px 9px; }
+  .model-nav-root {
+    position: relative;
+    inset: auto;
+    width: calc(100% + 40px);   /* full-bleed past the page padding */
+    margin: 12px -20px 8px;
+    height: min(128vw, 600px);
+  }
+  .model-bottom-fade { height: 22%; }
+  .model-nav-halo    { width: 92vw; height: 92vw; }
+
+  .mnav-pill     { min-width: 112px; min-height: 48px; justify-content: center; }
+  .mnav-label    { font-size: 0.68rem; letter-spacing: 0.2em; padding: 6px 16px 0; }
+  .mnav-pill-top { padding: 8px 12px 0; }
+  .mnav-pill-bot { padding: 4px 12px 8px; }
   .mnav-num      { display: none; }
 
   /* hide stems — too cramped at mobile */
   .pos-0::before, .pos-1::before,
   .pos-2::before, .pos-3::before { display: none; }
 
-  .pos-0 { top: 8%; }
+  .pos-0 { top: 4%; }
   .pos-1 { top: 50%; left: 14px; right: auto; transform: translateY(-50%); }
   .pos-2 { top: 50%; right: 14px; left: auto; transform: translateY(-50%); }
-  .pos-3 { bottom: 86px; }
+  .pos-3 { bottom: 5%; }
 
   .mnav-corner { width: 22px; height: 22px; }
-  .mnav-corner.tl, .mnav-corner.tr { top: 14px; }
+  .mnav-corner.tl, .mnav-corner.tr { top: 0; }
   .mnav-corner.tl, .mnav-corner.bl { left: 14px; }
   .mnav-corner.tr, .mnav-corner.br { right: 14px; }
-  .mnav-corner.bl, .mnav-corner.br { bottom: 14px; }
+  .mnav-corner.bl, .mnav-corner.br { bottom: 0; }
 }
 
-@media (max-width: 479px) {
-  .mnav-pill  { min-width: 90px; }
-  .mnav-label { font-size: 0.52rem; letter-spacing: 0.14em; }
-  .pos-1 { left: 10px; }
-  .pos-2 { right: 10px; }
-  .pos-3 { bottom: 84px; }
+@media (max-width: 480px) {
+  .model-nav-root { width: calc(100% + 32px); margin: 8px -16px 4px; }
+}
+
+@media (max-width: 379px) {
+  .mnav-pill  { min-width: 96px; }
+  .mnav-label { font-size: 0.62rem; letter-spacing: 0.14em; padding: 6px 12px 0; }
+  .pos-1 { left: 8px; }
+  .pos-2 { right: 8px; }
 }

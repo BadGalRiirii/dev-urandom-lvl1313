@@ -314,15 +314,35 @@
   .hero-title { font-size: clamp(3.0rem, 18vw, 4.8rem); }
 }
 
-/* Compact mode for short laptop screens */
-@media (max-height: 780px) {
+/* Phones: the deck can't be hovered, so lay it out fanned (all three cards
+   visible) and keep it inside the screen */
+@media (max-width: 767px) {
+  .hero-deck   { width: 100%; max-width: 340px; height: 236px; }
+  .deck-title  { font-size: 0.7rem; }
+  .deck-sub    { font-size: 0.56rem; }
+  .deck-ornament { font-size: 0.5rem; }
+}
+@media (max-width: 767px) and (hover: none) {
+  .hero-deck .deck-game      { transform: translateX(-15px) rotate(-10deg); filter: brightness(0.8) saturate(0.9); }
+  .hero-deck .deck-jinx      { transform: translateX(85px) rotate(0deg);   filter: brightness(0.88) saturate(0.95); }
+  .hero-deck .deck-portfolio { transform: translateX(175px) rotate(8deg); }
+}
+@media (max-width: 359px) {
+  .hero-deck { transform: scale(0.86); transform-origin: left bottom; }
+}
+
+/* Compact mode for short laptop screens (not phones — they scroll) */
+@media (min-width: 768px) and (max-height: 780px) {
   .hero { gap: 14px; }
   .hero-title { font-size: clamp(3.0rem, 5.2vw, 5rem); }
 }
 
-@media (max-height: 680px) {
+@media (min-width: 768px) and (max-height: 680px) {
   .hero { gap: 10px; }
   .hero-title { font-size: clamp(2.6rem, 4.6vw, 4.4rem); }
   .hero-ornament { display: none; }
   .hero-deck { display: none; }
+}
+@media (max-width: 767px) {
+  .deck-card { left: 28px; }   /* room for the left card's tilt */
 }

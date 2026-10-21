@@ -188,3 +188,8 @@
   padding: 22px 0;
   font-style: italic;
 }
+
+/* Phones: full width under the flower, and tall enough for every entry */
+@media (max-width: 767px) {
+  .feed-preview { width: 100%; max-height: none; }
+}

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import './SpineMosaic.css'
 
+const canHover = () => window.matchMedia('(hover: hover)').matches
+
 function getSpineDimensions(maxPerRow) {
   const w = Math.min(110, Math.max(64, Math.floor(800 / maxPerRow)))
   const h = Math.round(w * 4.8)
@@ -18,9 +20,9 @@ export default function SpineMosaic({ books, mosaicImage, title, type }) {
   const maxPerRow = Math.ceil(count / targetRows)
   const { w: SPINE_W, h: SPINE_H } = getSpineDimensions(maxPerRow)
   const totalW = maxPerRow * SPINE_W
-  const totalH = targetRows * SPINE_H
 
   const hoveredBook = hoveredIdx !== null ? books[hoveredIdx] : null
+  const open = (book) => navigate(`/read/${book.id}`)
 
   return (
     <section className="spine-mosaic-section">
@@ -34,9 +36,14 @@ export default function SpineMosaic({ books, mosaicImage, title, type }) {
       </div>
 
       <div className="mosaic-grid-scroll">
+        {/* Full size on desktop; on a phone the spines shrink so the whole painting
+            (every book) fits the screen. Sizes are in % so the painting still lines up. */}
         <div
           className="mosaic-grid"
-          style={{ gridTemplateColumns: `repeat(${maxPerRow}, ${SPINE_W}px)` }}
+          style={{
+            gridTemplateColumns: `repeat(${maxPerRow}, 1fr)`,
+            width: `min(100%, ${totalW + (maxPerRow - 1) * 2}px)`,
+          }}
           onMouseLeave={() => setHoveredIdx(null)}
         >
           {books.map((book, i) => {
@@ -49,12 +56,14 @@ export default function SpineMosaic({ books, mosaicImage, title, type }) {
               <motion.div
                 key={book.id}
                 className={`mosaic-spine${isHovered ? ' hovered' : ''}`}
+                role="link"
+                tabIndex={0}
+                aria-label={book.title}
                 style={{
-                  width: SPINE_W,
-                  height: SPINE_H,
+                  aspectRatio: `${SPINE_W} / ${SPINE_H}`,
                   backgroundImage: `url(${mosaicImage})`,
-                  backgroundSize: `${totalW}px ${totalH}px`,
-                  backgroundPosition: `${-col * SPINE_W}px ${-row * SPINE_H}px`,
+                  backgroundSize: `${maxPerRow * 100}% ${targetRows * 100}%`,
+                  backgroundPosition: `${maxPerRow > 1 ? (col / (maxPerRow - 1)) * 100 : 0}% ${targetRows > 1 ? (row / (targetRows - 1)) * 100 : 0}%`,
                   backgroundRepeat: 'no-repeat',
                 }}
                 animate={{
@@ -66,13 +75,14 @@ export default function SpineMosaic({ books, mosaicImage, title, type }) {
                     : 'brightness(0.82) saturate(0.88)',
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-                onMouseEnter={() => setHoveredIdx(i)}
-                onTouchStart={() => setHoveredIdx(i)}
+                onMouseEnter={() => { if (canHover()) setHoveredIdx(i) }}
+                // Mouse: hovering already shows the title, so a click opens the book.
+                // Touch: the first tap shows the title, a second tap opens it.
                 onClick={() => {
-                  if (hoveredIdx === i) navigate(`/read/${book.id}`)
+                  if (canHover() || hoveredIdx === i) open(book)
                   else setHoveredIdx(i)
                 }}
-              />
+                onKeyDown={(e) => { if (e.key === 'Enter') open(book) }}              />
             )
           })}
         </div>
@@ -90,11 +100,14 @@ export default function SpineMosaic({ books, mosaicImage, title, type }) {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
             >
-              <span className="mosaic-reveal-title">{hoveredBook.title}</span>
+              <button className="mosaic-reveal-title" onClick={() => open(hoveredBook)}>{hoveredBook.title}</button>
               {hoveredBook.author && (
                 <span className="mosaic-reveal-author mono">{hoveredBook.author}</span>
               )}
-              <span className="mosaic-reveal-hint mono">click to open</span>
+              <span className="mosaic-reveal-hint mono">
+                <span className="hint-mouse">click to open</span>
+                <span className="hint-touch">tap again to open</span>
+              </span>
             </motion.div>
           ) : (
             <motion.div
@@ -105,7 +118,10 @@ export default function SpineMosaic({ books, mosaicImage, title, type }) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
             >
-              <span className="mosaic-reveal-idle mono">— hover a spine —</span>
+              <span className="mosaic-reveal-idle mono">
+                <span className="hint-mouse">— hover a spine —</span>
+                <span className="hint-touch">— tap a spine —</span>
+              </span>
             </motion.div>
           )}
         </AnimatePresence>

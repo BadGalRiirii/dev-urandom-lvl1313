@@ -97,22 +97,25 @@ body.page-journal .nav-links .pill.active {
   gap: 6px;
 }
 
+/* Phones: the four links share the width evenly, each a full-size tap target */
 @media (max-width: 768px) {
-  .nav { padding: 14px 24px; }
-  .nav::after { left: 24px; right: 24px; }
+  .nav { padding: max(12px, env(safe-area-inset-top)) 16px 12px; }
+  .nav::after { left: 16px; right: 16px; }
   .nav-chapter { display: none; }
-  .nav-links { gap: 4px; }
+  .nav-links { flex: 1; gap: 6px; }
   .nav-links .pill {
-    padding: 6px 13px;
-    font-size: 0.64rem;
-    letter-spacing: 0.10em;
+    flex: 1;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
   }
 }
 
 @media (max-width: 380px) {
-  .nav-links .pill {
-    padding: 5px 10px;
-    font-size: 0.60rem;
-    letter-spacing: 0.07em;
-  }
+  .nav-links { gap: 4px; }
+  .nav-links .pill { font-size: 0.64rem; letter-spacing: 0.06em; }
 }

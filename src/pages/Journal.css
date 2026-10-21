@@ -186,6 +186,6 @@
 
 @media (max-width: 480px) {
   .journal-page { padding: 80px 16px 40px; }
-  .journal-filters { gap: 6px; }
-  .journal-filters .pill { padding: 6px 14px; font-size: 0.65rem; }
+  .journal-filters { gap: 8px; }
+  .journal-filters .pill { min-height: 40px; padding: 0 16px; font-size: 0.7rem; }
 }

@@ -37,6 +37,8 @@
   color: var(--muted);
   transition: var(--transition);
   align-self: flex-start;
+  padding: 12px 12px 12px 0;   /* a finger-sized target around the small text */
+  margin: -12px 0;
 }
 .post-back:hover { color: var(--yellow); }
 

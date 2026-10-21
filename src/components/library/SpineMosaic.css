@@ -51,6 +51,13 @@
 }
 
 /* ─── Grid ────────────────────────────────────────── */
+/* Full width so the grid's min(100%, natural width) has something to measure */
+.mosaic-grid-scroll {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 .mosaic-grid {
   display: grid;
   gap: 2px;
@@ -109,6 +116,25 @@
   line-height: 1.05;
 }
 
+button.mosaic-reveal-title {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* "hover" wording for mice, "tap" wording for touch screens */
+.hint-touch { display: none; }
+@media (hover: none) {
+  .hint-mouse { display: none; }
+  .hint-touch { display: inline; }
+}
+
+.mosaic-spine:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
+}
+
 .mosaic-reveal-author {
   font-family: var(--font-sc);
   font-size: 0.62rem;
@@ -145,27 +171,24 @@
   .mosaic-meta {
     padding: 0 20px;
   }
-  /* Horizontal scroll container for the grid */
+  /* The spines shrink to fit, so the whole painting is always on screen
+     (room above for the tapped spine to lift) */
   .mosaic-grid-scroll {
     width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 0 20px 12px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(201, 168, 71, 0.25) transparent;
+    padding: 20px 20px 0;
   }
-  .mosaic-grid-scroll::-webkit-scrollbar { height: 3px; }
-  .mosaic-grid-scroll::-webkit-scrollbar-thumb {
-    background: rgba(201, 168, 71, 0.25);
-    border-radius: 2px;
-  }
-  .mosaic-title-reveal { padding: 0 20px; }
+  .mosaic-title-reveal { width: 100%; min-height: 96px; height: auto; padding: 0 20px; }
+  .mosaic-meta-count  { font-size: 0.68rem; }
+  .mosaic-meta-type   { font-size: 0.68rem; }
+  .mosaic-reveal-idle,
+  .mosaic-reveal-hint { font-size: 0.66rem; }
+  .mosaic-reveal-author { font-size: 0.7rem; }
 }
 
 @media (max-width: 480px) {
-  .spine-mosaic-section { padding: 36px 0 32px; }
+  .spine-mosaic-section { padding: 28px 0 24px; }
   .mosaic-meta { padding: 0 16px; flex-wrap: wrap; gap: 8px; }
-  .mosaic-grid-scroll { padding: 0 16px 10px; }
+  .mosaic-grid-scroll { padding: 20px 16px 0; }
   .mosaic-title-reveal { padding: 0 16px; }
   .mosaic-reveal-title { font-size: 1.4rem; }
 }

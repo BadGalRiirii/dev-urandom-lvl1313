@@ -261,12 +261,26 @@
   .home-content { padding: 70px 52px 90px; }
 }
 
-/* ─── Mobile — already handled by ≤1050px auto-height above ─── */
+/* ─── Phones: one column, nothing on top of anything else ───
+   title → the flower with its four plaques around it → recent additions.
+   The flower stage is its own block in the flow (see ModelNav.css), so the
+   plaques sit around the flower instead of over the text. */
 @media (max-width: 767px) {
+  .home-hero-section {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 40px 20px 56px;
+  }
+  .home-content,
+  .home-main { display: contents; }
   .home-spacer { display: none; }
-  .home-content { padding: 80px 24px 72px; }
+
+  .home-hero  { order: 1; width: 100%; }
+  .model-nav-root { order: 2; }
+  .home-feed  { order: 3; width: 100%; align-self: stretch; }
 }
 
 @media (max-width: 480px) {
-  .home-content { padding: 80px 16px 60px; }
+  .home-hero-section { padding: 32px 16px 48px; }
 }
