@@ -15,13 +15,11 @@
   -webkit-user-select: none;
 }
 
-/* You, faintly — a sepia ghost behind the fruit, mirrored like a looking glass */
+/* You, faintly — a sepia ghost behind the fruit, mirrored like a looking glass.
+   Placed by the page with the same geometry as the blade (see cameraBox). */
 .orch-video {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  object-fit: fill;
   transform: scaleX(-1);
   opacity: 0;
   filter: grayscale(1) sepia(0.55) contrast(1.15) brightness(0.8);
@@ -148,6 +146,30 @@
   animation: orch-breathe 1.6s ease-in-out infinite alternate;
 }
 @keyframes orch-breathe { from { opacity: 0.55; } to { opacity: 1; } }
+.orch-hint.quiet {
+  max-width: min(560px, calc(100% - 48px));
+  text-align: center;
+  font-family: var(--font-body);
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 1rem;
+  color: rgba(240, 226, 204, 0.8);
+  animation: none;
+}
+
+/* ?stats — what the camera and tracker are really doing, for tuning */
+.orch-stats {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.6);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: rgba(240, 226, 204, 0.85);
+  pointer-events: none;
+}
 
 /* ─── Panels (intro / ready / paused / over) ───────── */
 .orch-panel {

@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom'
 import { createOrchard } from '../components/orchard/engine'
 import { createSound } from '../components/orchard/sound'
 import { loadHandTracker, startCamera, stopCamera, trackFingertip } from '../components/orchard/handTracker'
+import { oneEuro } from '../components/orchard/oneEuro'
 import './Orchard.css'
 
 const SCORES_KEY = 'riri_orchard_scores'
 const MUTE_KEY   = 'riri_orchard_muted'
-const REACH      = 0.12    // the outer 12% of the camera picture maps past the screen edge, so you needn't stretch
+const ZOOM       = 1.3     // the camera picture is shown (and mapped) this much larger than the screen, so you needn't stretch to reach the edges
 const HOLD_MS    = 600     // how long a hand must be in view before the countdown starts
+const SLOW_CAMERA = 20     // frames a second; below this, suggest more light
 const LOST_MS    = 250     // fast slashes blur, and the tracker drops the hand for a frame or two — that's still one stroke
 
 // Personal bests live in this browser only — no accounts, no database
@@ -24,6 +26,16 @@ const saveScore = (score, mode) => {
 }
 
 const isPhone = () => window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(any-pointer: fine)').matches
+
+// Where the camera picture sits on screen: covering it, then zoomed a little.
+// The fingertip is mapped with the same numbers as the mirrored picture is drawn,
+// so the blade sits exactly on your finger in the reflection.
+function cameraBox(video, w, h) {
+  const vw = video.videoWidth || 640, vh = video.videoHeight || 480
+  const scale = Math.max(w / vw, h / vh) * ZOOM
+  const dw = vw * scale, dh = vh * scale
+  return { left: (w - dw) / 2, top: (h - dh) / 2, width: dw, height: dh }
+}
 
 const CAMERA_ERRORS = {
   NotAllowedError:  'The camera permission was declined. You can allow it from the camera icon in the address bar — or play with the mouse.',
@@ -71,6 +83,8 @@ export default function Orchard() {
   const streamRef  = useRef(null)
   const untrackRef = useRef(null)
   const tipRef     = useRef(null)
+  const filterRef  = useRef({ x: oneEuro(), y: oneEuro() })
+  const slowRef    = useRef(0)       // seconds in a row the camera has been slow
   const seenRef    = useRef(0)       // when the hand came into view (raise phase)
   const lostRef    = useRef(0)       // when the hand went out of view
   const phaseRef   = useRef('intro')
@@ -87,6 +101,9 @@ export default function Orchard() {
   const [result,  setResult]  = useState(null)
   const [muted,   setMuted]   = useState(() => localStorage.getItem(MUTE_KEY) === '1')
   const [phone] = useState(isPhone)
+  const [stats, setStats] = useState(null)
+  const [slowCamera, setSlowCamera] = useState(false)
+  const [showStats] = useState(() => new URLSearchParams(window.location.search).has('stats'))
 
   const setPhase = useCallback((p) => { phaseRef.current = p; setPhaseState(p) }, [])
 
@@ -107,11 +124,19 @@ export default function Orchard() {
       },
     })
     engineRef.current = engine
-    const onResize = () => engine.resize()
+    const video = videoRef.current
+    const placeVideo = () => {
+      const b = cameraBox(video, window.innerWidth, window.innerHeight)
+      Object.assign(video.style, { left: `${b.left}px`, top: `${b.top}px`, width: `${b.width}px`, height: `${b.height}px` })
+    }
+    const onResize = () => { engine.resize(); placeVideo() }
     window.addEventListener('resize', onResize)
+    video.addEventListener('loadedmetadata', placeVideo)
+    placeVideo()
     return () => {
       document.body.classList.remove('page-game')
       window.removeEventListener('resize', onResize)
+      video.removeEventListener('loadedmetadata', placeVideo)
       engine.destroy()
       untrackRef.current?.()
       stopCamera(streamRef.current)
@@ -138,7 +163,7 @@ export default function Orchard() {
   }, [setPhase])
 
   /* ── Hand: fingertip → blade ──────────────────────── */
-  const onTip = useCallback((tip) => {
+  const onTip = useCallback((tip, at) => {
     const engine = engineRef.current
     const canvas = canvasRef.current
     if (!engine || !canvas) return
@@ -148,22 +173,21 @@ export default function Orchard() {
       if (now - lostRef.current > LOST_MS && tipRef.current) {
         tipRef.current = null
         seenRef.current = 0
+        filterRef.current.x.reset()
+        filterRef.current.y.reset()
         engine.lift()
         setHandSeen(false)
       }
       return
     }
     lostRef.current = 0
-    const w = canvas.clientWidth, h = canvas.clientHeight
-    const target = {
-      x: ((tip.x - REACH) / (1 - 2 * REACH)) * w,
-      y: ((tip.y - REACH) / (1 - 2 * REACH)) * h,
-    }
-    // a little smoothing takes out the tracker's jitter without adding lag
-    const prev = tipRef.current
-    const p = prev ? { x: prev.x + (target.x - prev.x) * 0.7, y: prev.y + (target.y - prev.y) * 0.7 } : target
+    // steady when still, no lag when slashing
+    const fx = filterRef.current.x.filter(tip.x, at)
+    const fy = filterRef.current.y.filter(tip.y, at)
+    const box = cameraBox(videoRef.current, canvas.clientWidth, canvas.clientHeight)
+    const p = { x: box.left + fx * box.width, y: box.top + fy * box.height }
     tipRef.current = p
-    engine.point(p.x, p.y)
+    engine.aim(p.x, p.y)
     setHandSeen(true)
 
     if (phaseRef.current === 'raise') {
@@ -189,7 +213,13 @@ export default function Orchard() {
     try {
       const tracker = await loadHandTracker()
       untrackRef.current?.()
-      untrackRef.current = trackFingertip(videoRef.current, tracker, onTip)
+      untrackRef.current = trackFingertip(videoRef.current, tracker, onTip, (s) => {
+        setStats({ ...s, where: tracker.where, delegate: tracker.delegate, fps: engineRef.current?.fps })
+        // A dim room makes laptop cameras slow down to let more light in — and
+        // fewer frames means a laggier blade. Say so, rather than leave it a mystery.
+        slowRef.current = s.cameraFps < SLOW_CAMERA ? slowRef.current + 1 : 0
+        setSlowCamera(slowRef.current >= 3)
+      })
     } catch {
       setProblem('The hand tracker could not be downloaded — check the connection and try again, or play with the mouse.')
       setPhase('intro')
@@ -291,6 +321,16 @@ export default function Orchard() {
 
       {mode === 'hand' && phase === 'playing' && !handSeen && (
         <div className="orch-hint">Show your hand to the camera</div>
+      )}
+      {mode === 'hand' && inRound && handSeen && slowCamera && (
+        <div className="orch-hint quiet">
+          Your camera is sending {stats?.cameraFps} frames a second — more light on your hand makes the blade quicker
+        </div>
+      )}
+      {showStats && stats && mode === 'hand' && (
+        <div className="orch-stats" aria-hidden="true">
+          camera {stats.cameraFps} fps · tracker {stats.trackerFps}/s · {stats.trackerMs} ms ({stats.delegate}, {stats.where}) · game {stats.fps} fps
+        </div>
       )}
 
       {/* ── Intro ── */}

@@ -10,6 +10,7 @@ const TRAIL_MS     = 170
 const STROKE_GAP   = 280     // ms between points before it counts as a new stroke (hand tracking can skip a frame or two)
 const COMBO_GAP    = 260     // ms between cuts that still belong to one swipe
 const START_LIVES  = 3
+const LEAD_MS      = 50      // how far ahead of the last hand report the blade may run
 
 const rand  = (a, b) => a + Math.random() * (b - a)
 const pick  = (arr) => arr[Math.floor(Math.random() * arr.length)]
@@ -34,13 +35,15 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
   let mode   = 'idle'        // idle (just the blade) | play | over
   let paused = false
   let items = [], halves = [], drops = [], popups = [], queue = []
-  let trail = [], cursor = null
+  let trail = [], cursor = null, hand = null
+  let fadeWait = 0, fps = 60, fpsFrames = 0, fpsSince = performance.now()
   let score = 0, lives = START_LIVES, elapsed = 0, nextWave = 0
   let combo = 0, lastCut = 0, flash = 0, shake = 0
   let raf = 0, last = performance.now()
 
   function resize() {
-    dpr = Math.min(2, window.devicePixelRatio || 1)
+    // 1.5× is sharp enough for moving fruit, and much less to fill each frame than 2×
+    dpr = Math.min(1.5, window.devicePixelRatio || 1)
     W = canvas.clientWidth
     H = canvas.clientHeight
     canvas.width  = Math.round(W * dpr)
@@ -160,8 +163,8 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
   }
 
   /* ── Blade input (screen px) ──────────────────────── */
-  function point(x, y) {
-    const now = performance.now()
+  // One step of the blade: extends the trail and cuts whatever the step crosses
+  function step(x, y, now) {
     const prev = trail[trail.length - 1]
     cursor = { x, y }
     trail.push({ x, y, t: now })
@@ -174,7 +177,37 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
       if (!it.dead && segDist(it.x, it.y, prev.x, prev.y, x, y) <= it.r * 0.95) cut(it, angle, now)
     }
   }
-  function lift() { trail = []; cursor = null }
+
+  // Mouse / finger: points arrive every frame anyway
+  function point(x, y) {
+    hand = null
+    step(x, y, performance.now())
+  }
+
+  // Hand tracking reports the fingertip only 15–30 times a second, and a little
+  // late. Between reports the blade carries on along its current path (at most
+  // LEAD_MS ahead), so it moves every frame and keeps up with the real hand.
+  function aim(x, y) {
+    const now = performance.now()
+    if (hand && now - hand.t < STROKE_GAP) {
+      const dt = Math.max(0.008, (now - hand.t) / 1000)
+      hand.vx = hand.vx * 0.4 + ((x - hand.x) / dt) * 0.6
+      hand.vy = hand.vy * 0.4 + ((y - hand.y) / dt) * 0.6
+      Object.assign(hand, { x, y, t: now })
+    } else {
+      hand = { x, y, t: now, vx: 0, vy: 0 }
+    }
+    step(x, y, now)
+  }
+
+  function predict(now) {
+    if (!hand) return
+    const ahead = now - hand.t
+    if (ahead <= 4 || ahead > LEAD_MS) return
+    step(hand.x + (hand.vx * ahead) / 1000, hand.y + (hand.vy * ahead) / 1000, now)
+  }
+
+  function lift() { trail = []; cursor = null; hand = null }
 
   /* ── Frame ────────────────────────────────────────── */
   function update(dt, now) {
@@ -210,11 +243,16 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
     flash = Math.max(0, flash - dt * 2.2)
     shake = Math.max(0, shake - dt * 40)
 
-    // stains fade over ~4s
-    sctx.globalCompositeOperation = 'destination-out'
-    sctx.fillStyle = `rgba(0,0,0,${Math.min(1, dt * 0.35)})`
-    sctx.fillRect(0, 0, stains.width, stains.height)
-    sctx.globalCompositeOperation = 'source-over'
+    // stains fade over ~4s — a few times a second is plenty (and a tiny per-frame
+    // fade would round to nothing and leave them for good)
+    fadeWait += dt
+    if (fadeWait > 0.15) {
+      sctx.globalCompositeOperation = 'destination-out'
+      sctx.fillStyle = `rgba(0,0,0,${Math.min(1, fadeWait * 0.35)})`
+      sctx.fillRect(0, 0, stains.width, stains.height)
+      sctx.globalCompositeOperation = 'source-over'
+      fadeWait = 0
+    }
   }
 
   function drawSprite(kind, x, y, rot) {
@@ -320,7 +358,9 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
     raf = requestAnimationFrame(frame)
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
-    if (!paused) update(dt, now)
+    if (!paused) { predict(now); update(dt, now) }
+    fpsFrames++
+    if (now - fpsSince >= 1000) { fps = Math.round((fpsFrames * 1000) / (now - fpsSince)); fpsFrames = 0; fpsSince = now }
     draw(now)
   }
 
@@ -330,6 +370,7 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
   return {
     resize,
     point,
+    aim,
     lift,
     start() {
       items = []; halves = []; drops = []; popups = []; queue = []
@@ -344,6 +385,7 @@ export function createOrchard(canvas, { onScore, onLives, onOver, sound } = {}) 
     pause()  { paused = true },
     resume() { paused = false; last = performance.now() },
     get playing() { return mode === 'play' && !paused },
+    get fps() { return fps },
     destroy() { cancelAnimationFrame(raf) },
   }
 }
